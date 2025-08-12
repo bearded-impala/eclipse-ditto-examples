@@ -46,7 +46,7 @@ This repository contains comprehensive examples and experiments with Eclipse Dit
 - **Example 6**: MQTT Connection - Basic MQTT integration
 
 ### Thing Search Examples
-- **Example 8**: Fleet Management - Managing device fleets
+- **Example 7**: Fleet Management - Managing device fleets
 
 ## 🛠️ Running Examples
 
