@@ -7,5 +7,6 @@ benchmarks/
 *.py[cod]
 .DS_Store
 .venv
+.env
 
 # Note: env.local is now safe to commit as it contains only local MongoDB config

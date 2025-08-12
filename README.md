@@ -25,7 +25,7 @@ This repository contains comprehensive examples and experiments with Eclipse Dit
 
 3. **Start Eclipse Ditto:**
    ```bash
-   uv run poe start-docker
+   uv run poe start-ditto
    ```
 
 4. **Explore the examples:**
@@ -54,7 +54,6 @@ This repository contains comprehensive examples and experiments with Eclipse Dit
 
 ## 🛠️ Running Examples
 
-### Using Poe Commands (Recommended)
 ```bash
 # Run individual examples
 uv run poe e1    # Device State Sync
