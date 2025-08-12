@@ -2,7 +2,12 @@
 """
 Example 7: Fleet Management
 
-This example demonstrates how to:
+## Goal
+
+Manage a fleet of sensor devices.
+
+## Flow
+
 1. Create a policy for sensor devices
 2. Bulk create multiple things from JSON files
 3. Update sensor reported states

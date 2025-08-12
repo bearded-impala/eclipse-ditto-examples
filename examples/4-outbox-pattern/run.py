@@ -2,7 +2,12 @@
 """
 Example 4: Outbox Pattern
 
-This example demonstrates how to:
+## Goal
+
+Remotely lock/unlock a smart door. We want to ensure the command is eventually delivered and confirmed, even if the door lock is temporarily offline. We'll use the Outbox Pattern focusing on the desired vs. reported state synchronization.
+
+## Flow
+
 1. Create a policy for a doorlock device
 2. Create a digital twin (thing) for the doorlock
 3. Application issues command (sets desired state - Outbox)

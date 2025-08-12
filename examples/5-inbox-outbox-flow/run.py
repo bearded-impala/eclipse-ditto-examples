@@ -2,7 +2,14 @@
 """
 Example 5: Inbox Outbox Flow
 
-This example demonstrates how to:
+## Goal
+
+Simulate an application polling a Smart Kettle's digital twin to:
+1. Check if a desired temperature command is pending (outbox concept).
+2. Read the latest reported temperature and any incoming activity messages (inbox concept).
+
+## Flow
+
 1. Create a policy for a kettle device
 2. Create a digital twin (thing) for the kettle
 3. Create a connection for device communication

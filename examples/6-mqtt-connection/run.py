@@ -2,7 +2,12 @@
 """
 Example 6: MQTT Connection
 
-This example demonstrates how to:
+## Goal
+
+Connect a device to Ditto via MQTT.
+
+## Flow
+
 1. Start an MQTT broker
 2. Create Ditto policies and things
 3. Create MQTT source and target connections

@@ -2,7 +2,13 @@
 """
 Example 1: Device State Sync
 
-This example demonstrates how to:
+## Goal
+
+- Send a command to a digital twin to change a desired state (e.g., turn a light on), and then verify the desired state is updated.
+- For a real device, this would also involve the device receiving and acting on the command.
+
+## Flow
+
 1. Create a policy for a sensor device
 2. Create a digital twin (thing) for the sensor
 3. Update the reported state (temperature)

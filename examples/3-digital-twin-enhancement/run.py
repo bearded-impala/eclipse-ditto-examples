@@ -2,7 +2,12 @@
 """
 Example 3: Digital Twin Enhancement
 
-This example demonstrates how to:
+## Goal
+
+Enrich a digital twin with external data (e.g., weather information based on location). This typically involves an external service fetching data and Ditto pushing it into the twin.
+
+## Flow
+
 1. Create a policy for a vehicle device
 2. Create a digital twin (thing) for the vehicle
 3. Simulate external service updating weather data
