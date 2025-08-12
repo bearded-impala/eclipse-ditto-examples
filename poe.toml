@@ -24,58 +24,37 @@ cmd = "docker rm -f mosquitto-broker"
 [tool.poe.tasks.e1]
 help = "Device State Sync"
 cwd = "examples/1-device-state-sync"
-sequence = [
-    {cmd = "chmod +x run_example.sh"},
-    {cmd = "./run_example.sh"},
-]
+cmd = "python run.py"
 
 [tool.poe.tasks.e2]
 help = "Remote Device Control"
 cwd = "examples/2-remote-device-control"
-sequence = [
-    {cmd = "chmod +x run_example.sh"},
-    {cmd = "./run_example.sh"},
-]
+cmd = "python run.py"
 
 [tool.poe.tasks.e3]
 help = "Digital Twin Enhancement"
 cwd = "examples/3-digital-twin-enhancement"
-sequence = [
-    {cmd = "chmod +x run_example.sh"},
-    {cmd = "./run_example.sh"},
-]
+cmd = "python run.py"
 
 [tool.poe.tasks.e4]
 help = "Outbox Pattern"
 cwd = "examples/4-outbox-pattern"
-sequence = [
-    {cmd = "chmod +x run_example.sh"},
-    {cmd = "./run_example.sh"},
-]
+cmd = "python run.py"
 
 [tool.poe.tasks.e5]
 help = "Inbox Outbox Flow"
 cwd = "examples/5-inbox-outbox-flow"
-sequence = [
-    {cmd = "chmod +x run_example.sh"},
-    {cmd = "./run_example.sh"},
-]
+cmd = "python run.py"
 
 [tool.poe.tasks.e6]
 help = "MQTT Connection"
 cwd = "examples/6-mqtt-connection"
-sequence = [
-    {cmd = "chmod +x run_example.sh"},
-    {cmd = "./run_example.sh"},
-]
+cmd = "python run.py"
 
 [tool.poe.tasks.e7]
 help = "Fleet Management"
 cwd = "examples/7-fleet-management"
-sequence = [
-    {cmd = "chmod +x run_example.sh"},
-    {cmd = "./run_example.sh"},
-]
+cmd = "python run.py"
 
 [tool.poe.tasks.hurl-install]
 help = "Install Hurl HTTP testing tool using uv"
@@ -101,3 +80,7 @@ sequence = [
     {cmd = "chmod +x run_hurl_tests.sh"},
     {cmd = "./run_hurl_tests.sh"},
 ]
+
+[tool.poe.tasks.cleanup-ditto]
+help = "Clean up all things, policies, and connections from Ditto"
+cmd = "python cleanup-ditto.py"

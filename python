@@ -1,0 +1,38 @@
+Poe the Poet (version 0.37.0)
+
+Error: Unrecognized task '='
+
+Usage:
+  poe [global options] task [task arguments]
+
+Global options:
+  -h, --help [TASK]     Show this help page and exit, optionally supply a
+                        task.
+  --version             Print the version and exit
+  -v, --verbose         Increase output (repeatable)
+  -q, --quiet           Decrease output (repeatable)
+  -d, --dry-run         Print the task contents but don't actually run it
+  -C, --directory PATH  Specify where to find the pyproject.toml
+  -e, --executor EXECUTOR
+                        Override the default task executor
+  --ansi                Force enable ANSI output
+  --no-ansi             Force disable ANSI output
+
+Configured tasks:
+  start-ditto           Initialize Ditto locally with horizontal scaling
+  stop-ditto            Shutdown local Ditto with horizontal scaling
+  start-mqtt-broker     Starts Mosquitto MQTT Broker
+  stop-mqtt-broker      Stops Mosquitto MQTT Broker
+  e1                    Device State Sync
+  e2                    Remote Device Control
+  e3                    Digital Twin Enhancement
+  e4                    Outbox Pattern
+  e5                    Inbox Outbox Flow
+  e6                    MQTT Connection
+  e7                    Fleet Management
+  hurl-install          Install Hurl HTTP testing tool using uv
+  hurl-list             List available Hurl tests
+  hurl-run-all          Run all Hurl tests
+  hurl-run              Run a specific Hurl test. Arguments: --test <test-name>
+
+
