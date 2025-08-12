@@ -17,38 +17,54 @@ Remotely lock/unlock a smart door. We want to ensure the command is eventually d
 This shows the outbox pattern for reliable command delivery.
 """
 
-import sys
 import os
+import sys
+
 from utils.ditto_operations import ExampleRunner
 
 
 class OutboxPatternExample(ExampleRunner):
     """Example 4: Outbox Pattern"""
-    
+
     def __init__(self):
         super().__init__("Outbox Pattern")
         self.doorlock_id = os.getenv("DOORLOCK_001_ID")
         self.policy_id = os.getenv("DOORLOCK_001_POLICY_ID")
-    
+
     def run(self):
         """Run the Outbox Pattern example."""
         try:
             operations = [
                 ("Creating Policy", lambda: self.create_policy(self.policy_id)),
                 ("Creating Thing", lambda: self.create_thing(self.doorlock_id)),
-                ("Application issues command (sets desired state - Outbox)", 
-                 lambda: self.update_thing_property(self.doorlock_id, "features/lockState/properties/status/desired", "LOCKED")),
-                ("Simulate Device Action and Report (Completing the Outbox cycle)", 
-                 lambda: self.update_thing_property(self.doorlock_id, "features/lockState/properties/status/value", "LOCKED")),
-                ("Retrieving Digital Twin State", lambda: self.get_thing(self.doorlock_id)),
+                (
+                    "Application issues command (sets desired state - Outbox)",
+                    lambda: self.update_thing_property(
+                        self.doorlock_id,
+                        "features/lockState/properties/status/desired",
+                        "LOCKED",
+                    ),
+                ),
+                (
+                    "Simulate Device Action and Report (Completing the Outbox cycle)",
+                    lambda: self.update_thing_property(
+                        self.doorlock_id,
+                        "features/lockState/properties/status/value",
+                        "LOCKED",
+                    ),
+                ),
+                (
+                    "Retrieving Digital Twin State",
+                    lambda: self.get_thing(self.doorlock_id),
+                ),
             ]
-            
+
             if not self.run_operations(operations):
                 return False
-            
+
             self.log_section("Example 4 completed!")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"❌ Error running example: {e}")
             return False

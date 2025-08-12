@@ -5,8 +5,10 @@ This module provides a client for interacting with the Eclipse Ditto HTTP API
 and is used across multiple example projects in this repository.
 """
 
+from typing import Any, Dict, List, Optional
+
 import httpx
-from typing import Any, Dict, Optional, List
+
 from .config import Config
 
 
@@ -14,27 +16,27 @@ class DittoClient:
     """
     Client for interacting with the Eclipse Ditto HTTP API.
     """
-    
+
     def __init__(self, config: Config):
         """
         Initialize the DittoClient.
-        
+
         Args:
             config: Config instance with connection details
         """
         self.config = config
-        self.base_url = config.ditto_url.rstrip('/')
+        self.base_url = config.ditto_url.rstrip("/")
         self.auth = (config.auth_user, config.auth_pass)
         self.session = httpx.Client()
 
     def create_policy(self, policy_id: str, policy_data: Dict[str, Any]) -> bool:
         """
         Create or update a policy in Ditto.
-        
+
         Args:
             policy_id: The policy ID
             policy_data: The policy JSON data
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -42,11 +44,7 @@ class DittoClient:
         headers = {"Content-Type": "application/json"}
         try:
             response = self.session.put(
-                url, 
-                json=policy_data, 
-                auth=self.auth, 
-                headers=headers, 
-                timeout=10
+                url, json=policy_data, auth=self.auth, headers=headers, timeout=10
             )
             return 200 <= response.status_code < 300
         except httpx.RequestError:
@@ -55,11 +53,11 @@ class DittoClient:
     def create_thing(self, thing_id: str, payload: Dict[str, Any]) -> bool:
         """
         Create or update a thing in Ditto.
-        
+
         Args:
             thing_id: The thing ID
             payload: The thing JSON data
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -67,14 +65,11 @@ class DittoClient:
         headers = {"Content-Type": "application/json"}
         try:
             response = self.session.put(
-                url, 
-                auth=self.auth, 
-                headers=headers, 
-                json=payload
+                url, auth=self.auth, headers=headers, json=payload
             )
             response.raise_for_status()
             return True
-        except httpx.HTTPStatusError as e:
+        except httpx.HTTPStatusError:
             return False
         except Exception:
             return False
@@ -82,10 +77,10 @@ class DittoClient:
     def get_thing(self, thing_id: str) -> Optional[Dict[str, Any]]:
         """
         Get a thing by ID.
-        
+
         Args:
             thing_id: The thing ID
-            
+
         Returns:
             Thing data or None if not found
         """
@@ -102,12 +97,12 @@ class DittoClient:
     def update_thing_property(self, thing_id: str, path: str, value: Any) -> bool:
         """
         Update a specific property of a thing.
-        
+
         Args:
             thing_id: The thing ID
             path: Property path (e.g., "features/temperature/properties/value")
             value: The value to set
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -115,10 +110,7 @@ class DittoClient:
         headers = {"Content-Type": "application/json"}
         try:
             response = self.session.put(
-                url,
-                auth=self.auth,
-                headers=headers,
-                json=value
+                url, auth=self.auth, headers=headers, json=value
             )
             response.raise_for_status()
             return True
@@ -127,14 +119,16 @@ class DittoClient:
         except Exception:
             return False
 
-    def search_things(self, filter_expr: Optional[str] = None, page_size: int = 200) -> Dict[str, Any]:
+    def search_things(
+        self, filter_expr: Optional[str] = None, page_size: int = 200
+    ) -> Dict[str, Any]:
         """
         Search things with optional filter.
-        
+
         Args:
             filter_expr: Optional filter expression
             page_size: Number of things per page
-            
+
         Returns:
             Search results
         """
@@ -156,25 +150,27 @@ class DittoClient:
     def list_thing_ids(self, page_size: int = 200) -> List[str]:
         """
         List all thing IDs in Ditto, handling pagination.
-        
+
         Args:
             page_size: Number of things per page
-            
+
         Returns:
             List of thing IDs
         """
         all_thing_ids: List[str] = []
         current_cursor: Optional[str] = None
         has_more_pages = True
-        
+
         while has_more_pages:
             search_params = {"option": f"size({page_size})"}
             if current_cursor:
                 search_params["option"] += f",cursor({current_cursor})"
             search_url = f"{self.base_url}/search/things"
-            
+
             try:
-                resp = self.session.get(search_url, auth=self.auth, params=search_params)
+                resp = self.session.get(
+                    search_url, auth=self.auth, params=search_params
+                )
                 resp.raise_for_status()
                 data = resp.json()
                 items = data.get("items", [])
@@ -186,16 +182,16 @@ class DittoClient:
                 has_more_pages = bool(current_cursor)
             except Exception:
                 break
-                
+
         return all_thing_ids
 
     def delete_thing(self, thing_id: str) -> bool:
         """
         Delete a thing by ID.
-        
+
         Args:
             thing_id: The thing ID
-            
+
         Returns:
             True if deleted or not found, False otherwise
         """
@@ -209,10 +205,10 @@ class DittoClient:
     def create_connection(self, connection_data: Dict[str, Any]) -> bool:
         """
         Create a connection in Ditto.
-        
+
         Args:
             connection_data: The connection JSON data
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -220,10 +216,7 @@ class DittoClient:
         headers = {"Content-Type": "application/json"}
         try:
             response = self.session.put(
-                url,
-                auth=self.auth,
-                headers=headers,
-                json=connection_data
+                url, auth=self.auth, headers=headers, json=connection_data
             )
             response.raise_for_status()
             return True
@@ -232,14 +225,16 @@ class DittoClient:
         except Exception:
             return False
 
-    async def async_delete_thing(self, thing_id: str, async_client: Optional[httpx.AsyncClient] = None) -> bool:
+    async def async_delete_thing(
+        self, thing_id: str, async_client: Optional[httpx.AsyncClient] = None
+    ) -> bool:
         """
         Asynchronously delete a thing by ID.
-        
+
         Args:
             thing_id: The thing ID
             async_client: Optional shared httpx.AsyncClient
-            
+
         Returns:
             True if deleted or not found, False otherwise
         """
@@ -268,11 +263,11 @@ class DittoClient:
 def create_ditto_client(config: Config) -> DittoClient:
     """
     Create a DittoClient instance.
-    
+
     Args:
         config: Config instance
-        
+
     Returns:
         DittoClient instance
     """
-    return DittoClient(config) 
+    return DittoClient(config)

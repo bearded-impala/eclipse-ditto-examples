@@ -7,7 +7,9 @@ in this repository.
 """
 
 import logging
-from colorama import Fore, Style, init as colorama_init
+
+from colorama import Fore, Style
+from colorama import init as colorama_init
 
 # Initialize colorama for cross-platform colored output
 colorama_init(autoreset=True)
@@ -15,7 +17,7 @@ colorama_init(autoreset=True)
 
 class ColorFormatter(logging.Formatter):
     """Custom formatter that adds colors to log messages."""
-    
+
     def format(self, record):
         msg = super().format(record)
         if record.levelno == logging.ERROR:
@@ -30,35 +32,35 @@ class ColorFormatter(logging.Formatter):
 def setup_logging(level: int = logging.INFO) -> logging.Logger:
     """
     Setup colored logging for the application.
-    
+
     Args:
         level: Logging level
-        
+
     Returns:
         Configured logger instance
     """
     handler = logging.StreamHandler()
     handler.setFormatter(ColorFormatter("%(asctime)s [%(levelname)s] %(message)s"))
-    
+
     logger = logging.getLogger(__name__)
     logger.handlers = []
     logger.addHandler(handler)
     logger.setLevel(level)
-    
+
     # Suppress httpx logging
     logging.getLogger("httpx").setLevel(logging.WARNING)
-    
+
     return logger
 
 
 def color_result_line(line: str, status_code: int) -> str:
     """
     Color a result line based on HTTP status code.
-    
+
     Args:
         line: Line to color
         status_code: HTTP status code
-        
+
     Returns:
         Colored line
     """
@@ -74,10 +76,12 @@ def color_result_line(line: str, status_code: int) -> str:
 def setup_basic_logging() -> logging.Logger:
     """
     Setup basic logging without colors (for scripts that don't need colors).
-    
+
     Returns:
         Configured logger instance
     """
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+    )
     logging.getLogger("httpx").setLevel(logging.WARNING)
-    return logging.getLogger(__name__) 
+    return logging.getLogger(__name__)

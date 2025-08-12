@@ -84,3 +84,11 @@ sequence = [
 [tool.poe.tasks.cleanup-ditto]
 help = "Clean up all things, policies, and connections from Ditto"
 cmd = "python cleanup-ditto.py"
+
+[tool.poe.tasks.ruff]
+help = "Run all ruff operations: format, check, and fix"
+sequence = [
+    {cmd = "uv run ruff check . --fix"},
+    {cmd = "uv run ruff format ."},  # Format after fixes
+    {cmd = "uv run ruff check ."},   # Final check
+]
