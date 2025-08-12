@@ -61,15 +61,3 @@ uv run poe e2    # Remote Device Control
 uv run poe e3    # Digital Twin Enhancement
 # ... etc
 ```
-
-### Manual Execution
-
-Either rely on the shell script or refer to the example specific README to understand detailed steps
-
-```bash
-# Navigate to example directory
-cd examples/1-device-state-sync
-
-# Run the example
-./run_example.sh
-```
