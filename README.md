@@ -29,6 +29,10 @@ This repository contains comprehensive examples and experiments with Eclipse Dit
    ```
 
 4. **Explore the examples:**
+
+   Make sure to rename .env.example to .env at the root of the repository.
+
+
    ```bash
    uv run poe --help  # See all available commands
    ```
