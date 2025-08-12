@@ -1,0 +1,16 @@
+{
+    "policyId": "my.test:policy",
+    "attributes": {
+        "manufacturer": "Well known sensors producer",
+        "serial number": "100",
+        "location": "Ground floor"
+    },
+    "features": {
+        "measurements": {
+            "properties": {
+                "temperature": 0,
+                "humidity": 0
+            }
+        }
+    }
+}

@@ -1,0 +1,17 @@
+{
+    "thingId": "org.eclipse.ditto:sensor-004",
+    "policyId": "org.eclipse.ditto:sensor-policy",
+    "features": {
+        "humidity": {
+            "properties": {
+                "value": 60,
+                "unit": "Percentage",
+                "timestamp": "2025-07-22T08:10:00Z"
+            }
+        }
+    },
+    "attributes": {
+        "location": "Gym",
+        "manufacturer": "Acme Inc"
+    }
+}

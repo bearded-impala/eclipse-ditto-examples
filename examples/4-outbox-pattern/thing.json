@@ -1,0 +1,18 @@
+{
+    "thingId": "org.eclipse.ditto:doorlock-001",
+    "policyId": "org.eclipse.ditto:doorlock-001-policy",
+    "definition": "org.eclipse.ditto:SmartLock:1.0.0",
+    "features": {
+        "lockState": {
+            "properties": {
+                "status": {
+                    "value": "UNLOCKED"
+                }
+            }
+        }
+    },
+    "attributes": {
+        "location": "Front Door",
+        "model": "LockPro-X"
+    }
+}

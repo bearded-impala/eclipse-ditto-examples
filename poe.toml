@@ -1,0 +1,103 @@
+[tool.poe.tasks.start-ditto]
+help = "Initialize Ditto locally with horizontal scaling"
+cwd = "docker"
+cmd = "docker compose -f docker-compose.yml up"
+
+[tool.poe.tasks.stop-ditto]
+help = "Shutdown local Ditto with horizontal scaling"
+cwd = "docker"
+cmd = "docker compose -f docker-compose.yml down"
+
+[tool.poe.tasks.start-mqtt-broker]
+help = "Starts Mosquitto MQTT Broker"
+cwd = "examples/config/mosquitto"
+sequence = [
+    {cmd = "docker pull eclipse-mosquitto:openssl"},
+    {cmd = "docker rm -f mosquitto-broker"},
+    {cmd = "docker run -d --name mosquitto-broker -p 1883:1883 -p 9001:9001 eclipse-mosquitto:openssl"},
+]
+
+[tool.poe.tasks.stop-mqtt-broker]
+help = "Stops Mosquitto MQTT Broker"
+cmd = "docker rm -f mosquitto-broker"
+
+[tool.poe.tasks.e1]
+help = "Device State Sync"
+cwd = "examples/1-device-state-sync"
+sequence = [
+    {cmd = "chmod +x run_example.sh"},
+    {cmd = "./run_example.sh"},
+]
+
+[tool.poe.tasks.e2]
+help = "Remote Device Control"
+cwd = "examples/2-remote-device-control"
+sequence = [
+    {cmd = "chmod +x run_example.sh"},
+    {cmd = "./run_example.sh"},
+]
+
+[tool.poe.tasks.e3]
+help = "Digital Twin Enhancement"
+cwd = "examples/3-digital-twin-enhancement"
+sequence = [
+    {cmd = "chmod +x run_example.sh"},
+    {cmd = "./run_example.sh"},
+]
+
+[tool.poe.tasks.e4]
+help = "Outbox Pattern"
+cwd = "examples/4-outbox-pattern"
+sequence = [
+    {cmd = "chmod +x run_example.sh"},
+    {cmd = "./run_example.sh"},
+]
+
+[tool.poe.tasks.e5]
+help = "Inbox Outbox Flow"
+cwd = "examples/5-inbox-outbox-flow"
+sequence = [
+    {cmd = "chmod +x run_example.sh"},
+    {cmd = "./run_example.sh"},
+]
+
+[tool.poe.tasks.e6]
+help = "MQTT Connection"
+cwd = "examples/6-mqtt-connection"
+sequence = [
+    {cmd = "chmod +x run_example.sh"},
+    {cmd = "./run_example.sh"},
+]
+
+[tool.poe.tasks.e7]
+help = "Fleet Management"
+cwd = "examples/7-fleet-management"
+sequence = [
+    {cmd = "chmod +x run_example.sh"},
+    {cmd = "./run_example.sh"},
+]
+
+[tool.poe.tasks.hurl-install]
+help = "Install Hurl HTTP testing tool using uv"
+cmd = "uv add --dev hurl"
+
+[tool.poe.tasks.hurl-list]
+help = "List available Hurl tests"
+cwd = "examples/hurl"
+cmd = "./run_hurl_tests.sh --list"
+
+[tool.poe.tasks.hurl-run-all]
+help = "Run all Hurl tests"
+cwd = "examples/hurl"
+sequence = [
+    {cmd = "chmod +x run_hurl_tests.sh"},
+    {cmd = "./run_hurl_tests.sh"},
+]
+
+[tool.poe.tasks.hurl-run]
+help = "Run a specific Hurl test. Arguments: --test <test-name>"
+cwd = "examples/hurl"
+sequence = [
+    {cmd = "chmod +x run_hurl_tests.sh"},
+    {cmd = "./run_hurl_tests.sh"},
+]

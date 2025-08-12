@@ -1,0 +1,11 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+benchmarks/
+
+*.py[cod]
+.DS_Store
+.venv
+
+# Note: env.local is now safe to commit as it contains only local MongoDB config

@@ -1,0 +1,43 @@
+{
+    "policyId": "org.eclipse.ditto:sensor-policy",
+    "entries": {
+        "devicePermissions": {
+            "subjects": {
+                "device:sensor-002": {
+                    "type": "ditto client"
+                }
+            },
+            "resources": {
+                "thing:/": {
+                    "grant": [
+                        "WRITE"
+                    ],
+                    "revoke": []
+                }
+            }
+        },
+        "applicationPermissions": {
+            "subjects": {
+                "nginx:ditto": {
+                    "type": "basic auth user"
+                }
+            },
+            "resources": {
+                "policy:/": {
+                    "grant": [
+                        "READ",
+                        "WRITE"
+                    ],
+                    "revoke": []
+                },
+                "thing:/": {
+                    "grant": [
+                        "READ",
+                        "WRITE"
+                    ],
+                    "revoke": []
+                }
+            }
+        }
+    }
+}

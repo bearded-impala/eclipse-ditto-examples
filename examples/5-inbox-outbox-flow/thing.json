@@ -1,0 +1,23 @@
+{
+    "thingId": "org.eclipse.ditto:kettle-001",
+    "policyId": "org.eclipse.ditto:kettle-001-policy",
+    "definition": "org.eclipse.ditto:SmartKettle:1.0.0",
+    "features": {
+        "temperature": {
+            "properties": {
+                "status": {
+                    "value": 20.0,
+                    "unit": "Celsius"
+                }
+            }
+        },
+        "activityLog": {
+            "properties": {
+                "events": []
+            }
+        }
+    },
+    "attributes": {
+        "location": "Kitchen Counter"
+    }
+}

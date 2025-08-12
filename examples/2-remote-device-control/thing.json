@@ -1,0 +1,17 @@
+{
+    "thingId": "org.eclipse.ditto:light-001",
+    "policyId": "org.eclipse.ditto:light-001-policy",
+    "definition": "org.eclipse.ditto:SmartLight:1.0.0",
+    "features": {
+        "onOff": {
+            "properties": {
+                "status": {
+                    "value": false
+                }
+            }
+        }
+    },
+    "attributes": {
+        "room": "Living Room"
+    }
+}

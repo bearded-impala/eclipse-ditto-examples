@@ -1,0 +1,18 @@
+{
+  "thingId": "org.eclipse.ditto:sensor-001",
+  "policyId": "org.eclipse.ditto:sensor-001-policy",
+  "definition": "org.eclipse.ditto:TemperatureSensor:1.0.0",
+  "features": {
+    "temperature": {
+      "properties": {
+        "value": 20.5,
+        "unit": "Celsius",
+        "timestamp": "2025-07-22T09:00:00Z"
+      }
+    }
+  },
+  "attributes": {
+    "location": "Living Room",
+    "manufacturer": "ABC"
+  }
+}
