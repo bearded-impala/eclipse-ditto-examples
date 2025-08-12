@@ -32,7 +32,7 @@ services:
         max-size: 50m
 
   policies:
-    image: docker.io/eclipse/ditto-policies:3.6
+    image: docker.io/eclipse/ditto-policies:${DITTO_VERSION:-latest}
     deploy:
       resources:
         limits:
@@ -65,7 +65,7 @@ services:
         max-size: 50m
         
   things:
-    image: docker.io/eclipse/ditto-things:3.6
+    image: docker.io/eclipse/ditto-things:${DITTO_VERSION:-latest}
     deploy:
       resources:
         limits:
@@ -100,7 +100,7 @@ services:
         max-size: 50m
         
   things-search:
-    image: docker.io/eclipse/ditto-things-search:3.6
+    image: docker.io/eclipse/ditto-things-search:${DITTO_VERSION:-latest}
     deploy:
       resources:
         limits:
@@ -135,7 +135,7 @@ services:
         max-size: 50m
         
   connectivity:
-    image: docker.io/eclipse/ditto-connectivity:3.6
+    image: docker.io/eclipse/ditto-connectivity:${DITTO_VERSION:-latest}
     deploy:
       resources:
         limits:
@@ -171,7 +171,7 @@ services:
         max-size: 50m
         
   gateway:
-    image: docker.io/eclipse/ditto-gateway:3.6
+    image: docker.io/eclipse/ditto-gateway:${DITTO_VERSION:-latest}
     deploy:
       resources:
         limits:
@@ -210,7 +210,7 @@ services:
         max-size: 50m
         
   ditto-ui:
-    image: docker.io/eclipse/ditto-ui:3.6
+    image: docker.io/eclipse/ditto-ui:${DITTO_VERSION:-latest}
     deploy:
       resources:
         limits:
