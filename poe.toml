@@ -71,3 +71,7 @@ sequence = [
     {cmd = "uv run ruff format ."},  # Format after fixes
     {cmd = "uv run ruff check ."},   # Final check
 ]
+
+[tool.poe.tasks.cleanup]
+help = "Clean up all things, policies, and connections from Ditto"
+cmd = "uv run cleanup.py"
