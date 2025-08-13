@@ -19,51 +19,81 @@ This shows the pattern of remote device control in Eclipse Ditto.
 import os
 import sys
 
-from utils.ditto_operations import ExampleRunner
-
-
-class RemoteDeviceControlExample(ExampleRunner):
-    """Example 2: Remote Device Control"""
-
-    def __init__(self):
-        super().__init__("Remote Device Control")
-        self.light_id = os.getenv("LIGHT_001_ID")
-        self.policy_id = os.getenv("LIGHT_001_POLICY_ID")
-
-    def run(self):
-        """Run the Remote Device Control example."""
-        try:
-            operations = [
-                ("Creating Policy", lambda: self.create_policy(self.policy_id)),
-                ("Creating Thing", lambda: self.create_thing(self.light_id)),
-                (
-                    "Updating Desired State (onOff)",
-                    lambda: self.update_thing_property(
-                        self.light_id, "features/onOff/properties/status/desired", True
-                    ),
-                ),
-                (
-                    "Retrieving Digital Twin State",
-                    lambda: self.get_thing(self.light_id),
-                ),
-            ]
-
-            if not self.run_operations(operations):
-                return False
-
-            self.log_section("Example 2 completed!")
-            return True
-
-        except Exception as e:
-            self.logger.error(f"❌ Error running example: {e}")
-            return False
+from utils.ditto_operations import (
+    cleanup,
+    create_policy,
+    create_thing,
+    get_thing,
+    print_error,
+    print_info,
+    print_section,
+    print_success,
+    run_operations,
+    update_thing_property,
+)
 
 
 def main():
-    """Main entry point."""
-    with RemoteDeviceControlExample() as example:
-        success = example.run()
-        sys.exit(0 if success else 1)
+    """Main entry point for Remote Device Control example."""
+    try:
+        # Get configuration from environment variables
+        light_id = os.getenv("LIGHT_001_ID")
+        policy_id = os.getenv("LIGHT_001_POLICY_ID")
+
+        if not light_id or not policy_id:
+            print_error(
+                "Missing required environment variables: LIGHT_001_ID or LIGHT_001_POLICY_ID"
+            )
+            print_info("Please check your .env file or environment variables")
+            sys.exit(1)
+
+        print_section("Example 2: Remote Device Control")
+        print_info(
+            "This example demonstrates remote device control using desired states"
+        )
+        print_info(f"Using light ID: {light_id}")
+        print_info(f"Using policy ID: {policy_id}")
+
+        # Get current directory for file operations
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Define the operations to run
+        operations = [
+            ("Creating Policy", create_policy, policy_id, "policy.json", current_dir),
+            ("Creating Thing", create_thing, light_id, "thing.json", current_dir),
+            (
+                "Updating Desired State (onOff)",
+                update_thing_property,
+                light_id,
+                "features/onOff/properties/status/desired",
+                True,
+            ),
+            ("Retrieving Digital Twin State", get_thing, light_id),
+        ]
+
+        # Run all operations
+        success = run_operations(operations)
+
+        if success:
+            print_section("Example 2 completed successfully!")
+            print_success("Remote device control example completed")
+            print_info(
+                "The light's desired state was updated and retrieved successfully"
+            )
+            print_info(
+                "In a real scenario, the device would receive this command and turn on"
+            )
+        else:
+            sys.exit(1)
+
+    except KeyboardInterrupt:
+        print_error("Example interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        print_error(f"Unexpected error in Example 2: {e}")
+        sys.exit(1)
+    finally:
+        cleanup()
 
 
 if __name__ == "__main__":

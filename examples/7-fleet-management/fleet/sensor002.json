@@ -8,10 +8,17 @@
                 "unit": "Percentage",
                 "timestamp": "2025-07-22T08:10:00Z"
             }
+        },
+        "temperature": {
+            "properties": {
+                "value": 25.5,
+                "unit": "Celsius",
+                "timestamp": "2025-07-22T08:10:00Z"
+            }
         }
     },
     "attributes": {
-        "location": "Meeting Room A1",
+        "location": "Living Room",
         "manufacturer": "ABC"
     }
 }

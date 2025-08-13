@@ -1,3 +1,5 @@
+# Ditto
+
 [tool.poe.tasks.start-ditto]
 help = "Initialize Ditto locally with horizontal scaling"
 cwd = "docker"
@@ -7,6 +9,8 @@ cmd = "docker compose -f docker-compose.yml up"
 help = "Shutdown local Ditto with horizontal scaling"
 cwd = "docker"
 cmd = "docker compose -f docker-compose.yml down"
+
+# MQTT broker
 
 [tool.poe.tasks.start-mqtt-broker]
 help = "Starts Mosquitto MQTT Broker"
@@ -21,74 +25,49 @@ sequence = [
 help = "Stops Mosquitto MQTT Broker"
 cmd = "docker rm -f mosquitto-broker"
 
+# Examples
+
 [tool.poe.tasks.e1]
 help = "Device State Sync"
 cwd = "examples/1-device-state-sync"
-cmd = "python run.py"
+cmd = "uv run run.py"
 
 [tool.poe.tasks.e2]
 help = "Remote Device Control"
 cwd = "examples/2-remote-device-control"
-cmd = "python run.py"
+cmd = "uv run run.py"
 
 [tool.poe.tasks.e3]
 help = "Digital Twin Enhancement"
 cwd = "examples/3-digital-twin-enhancement"
-cmd = "python run.py"
+cmd = "uv run run.py"
 
 [tool.poe.tasks.e4]
 help = "Outbox Pattern"
 cwd = "examples/4-outbox-pattern"
-cmd = "python run.py"
+cmd = "uv run run.py"
 
 [tool.poe.tasks.e5]
 help = "Inbox Outbox Flow"
 cwd = "examples/5-inbox-outbox-flow"
-cmd = "python run.py"
+cmd = "uv run run.py"
 
 [tool.poe.tasks.e6]
 help = "MQTT Connection"
 cwd = "examples/6-mqtt-connection"
-cmd = "python run.py"
+cmd = "uv run run.py"
 
 [tool.poe.tasks.e7]
 help = "Fleet Management"
 cwd = "examples/7-fleet-management"
-cmd = "python run.py"
+cmd = "uv run run.py"
 
-[tool.poe.tasks.hurl-install]
-help = "Install Hurl HTTP testing tool using uv"
-cmd = "uv add --dev hurl"
-
-[tool.poe.tasks.hurl-list]
-help = "List available Hurl tests"
-cwd = "examples/hurl"
-cmd = "./run_hurl_tests.sh --list"
-
-[tool.poe.tasks.hurl-run-all]
-help = "Run all Hurl tests"
-cwd = "examples/hurl"
-sequence = [
-    {cmd = "chmod +x run_hurl_tests.sh"},
-    {cmd = "./run_hurl_tests.sh"},
-]
-
-[tool.poe.tasks.hurl-run]
-help = "Run a specific Hurl test. Arguments: --test <test-name>"
-cwd = "examples/hurl"
-sequence = [
-    {cmd = "chmod +x run_hurl_tests.sh"},
-    {cmd = "./run_hurl_tests.sh"},
-]
-
-[tool.poe.tasks.cleanup-ditto]
-help = "Clean up all things, policies, and connections from Ditto"
-cmd = "python cleanup-ditto.py"
+# Helpers
 
 [tool.poe.tasks.ruff]
 help = "Run all ruff operations: format, check, and fix"
 sequence = [
-    {cmd = "uv run ruff check . --fix"},
+    {cmd = "uv run ruff check . --fix --unsafe-fixes"},
     {cmd = "uv run ruff format ."},  # Format after fixes
     {cmd = "uv run ruff check ."},   # Final check
 ]

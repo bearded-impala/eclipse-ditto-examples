@@ -1,29 +1,37 @@
 {
-    "name": "ditto-to-mosquitto-event-bridge",
-    "connectionType": "mqtt",
-    "connectionStatus": "open",
-    "uri": "tcp://host.docker.internal:1883/",
-    "targets": [
-        {
-            "address": "ditto/events/thing",
-            "topics": [
-                "_/_/things/twin/events",
-                "_/_/things/live/messages"
+    "targetActorSelection": "/system/sharding/connection",
+    "headers": {
+        "aggregate": false
+    },
+    "piggybackCommand": {
+        "type": "connectivity.commands:createConnection",
+        "connection": {
+            "id": "ditto-to-mosquitto-event-bridge",
+            "connectionType": "mqtt",
+            "connectionStatus": "open",
+            "failoverEnabled": true,
+            "uri": "tcp://host.docker.internal:1883/",
+            "targets": [
+                {
+                    "address": "ditto/events/thing",
+                    "topics": [
+                        "_/_/things/twin/events",
+                        "_/_/things/live/messages"
+                    ],
+                    "authorizationContext": [
+                        "nginx:ditto"
+                    ],
+                    "qos": 0
+                }
             ],
-            "authorizationContext": [
-                "nginx:ditto"
-            ],
-            "qos": 0
-        }
-    ],
-    "mappingDefinitions": {
-        "customJs": {
-            "mappingEngine": "JavaScript",
-            "options": {
-                "incomingScript": "function mapToDittoProtocolMsg(headers, textPayload, bytePayload, contentType) {return null;}",
-                "outgoingScript": "function mapFromDittoProtocolMsg(namespace, id, group, channel, criterion, action, path, dittoHeaders, value, status, extra) {let textPayload = '{\"temperature\": ' + value.measurements.properties.temperature + ', \"humidity\": ' + value.measurements.properties.humidity + ', \"thingId\": \"' + namespace + ':' + id + '\"}'; let bytePayload = null; let contentType = 'text/plain; charset=UTF-8'; return  Ditto.buildExternalMsg(dittoHeaders, textPayload, bytePayload, contentType);}",
-                "loadBytebufferJS": "false",
-                "loadLongJS": "false"
+            "mappingContext": {
+                "mappingEngine": "JavaScript",
+                "options": {
+                    "incomingScript": "function mapToDittoProtocolMsg(headers, textPayload, bytePayload, contentType) {return null;}",
+                    "outgoingScript": "function mapFromDittoProtocolMsg(namespace, id, group, channel, criterion, action, path, dittoHeaders, value, status, extra) {let textPayload = '{\"temperature\": ' + value.measurements.properties.temperature + ', \"humidity\": ' + value.measurements.properties.humidity + ', \"thingId\": \"' + namespace + ':' + id + '\"}'; let bytePayload = null; let contentType = 'text/plain; charset=UTF-8'; return  Ditto.buildExternalMsg(dittoHeaders, textPayload, bytePayload, contentType);}",
+                    "loadBytebufferJS": "false",
+                    "loadLongJS": "false"
+                }
             }
         }
     }

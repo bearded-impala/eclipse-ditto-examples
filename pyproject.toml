@@ -30,8 +30,6 @@ dev-dependencies = [
     "hurl>=1.10.0",
 ]
 
-
-
 [tool.ruff.format]
 # Like Black, use double quotes for strings.
 quote-style = "double"

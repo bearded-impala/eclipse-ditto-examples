@@ -23,159 +23,218 @@ import os
 import sys
 from pathlib import Path
 
-from utils.ditto_operations import ExampleRunner
+from utils.ditto_operations import (
+    cleanup,
+    create_policy,
+    load_json_file,
+    print_error,
+    print_info,
+    print_section,
+    print_success,
+    run_operations,
+    search_things,
+    update_thing_property,
+)
 
 
-class FleetManagementExample(ExampleRunner):
-    """Example 7: Fleet Management"""
+def bulk_create_things(current_dir: str = None) -> bool:
+    """Bulk create things from JSON files in the fleet folder."""
+    try:
+        print_section("Bulk Creating Things")
 
-    def __init__(self):
-        super().__init__("Fleet Management")
-        self.policy_id = os.getenv("SENSOR_POLICY_ID")
-        self.sensor002_id = os.getenv("SENSOR_002_ID")
-        self.fleet_folder = self.script_dir / "fleet"
+        # Get the fleet folder path
+        if current_dir:
+            fleet_folder = Path(current_dir) / "fleet"
+        else:
+            # Fallback to current working directory
+            fleet_folder = Path.cwd() / "fleet"
 
-    def bulk_create_things(self) -> bool:
-        """Bulk create things from JSON files in the fleet folder."""
-        try:
-            # Get all JSON files in the fleet folder
-            json_files = glob.glob(str(self.fleet_folder / "*.json"))
+        # Get all JSON files in the fleet folder
+        json_files = glob.glob(str(fleet_folder / "*.json"))
 
-            if not json_files:
-                self.logger.error(f"❌ No JSON files found in {self.fleet_folder}")
-                return False
+        if not json_files:
+            print_error(f"No JSON files found in {fleet_folder}")
+            return False
 
-            for json_file in sorted(json_files):
-                try:
-                    # Load the JSON data
-                    thing_data = self.load_json_file(
-                        Path(json_file).name, str(self.fleet_folder)
+        print_info(f"Found {len(json_files)} sensor files to create")
+
+        for json_file in sorted(json_files):
+            try:
+                # Load the JSON data
+                thing_data = load_json_file(Path(json_file).name, str(fleet_folder))
+                thing_id = thing_data.get("thingId")
+
+                if not thing_id:
+                    print_error(f"Skipping {json_file} - no 'thingId' found")
+                    continue
+
+                # Create the thing
+                url = f"{os.getenv('DITTO_API_BASE', 'http://localhost:8080/api/2')}/things/{thing_id}"
+                headers = {"Content-Type": "application/json"}
+                auth = (
+                    os.getenv("DITTO_USERNAME", "ditto"),
+                    os.getenv("DITTO_PASSWORD", "ditto"),
+                )
+
+                import httpx
+
+                session = httpx.Client(timeout=30.0)
+                response = session.put(url, json=thing_data, auth=auth, headers=headers)
+
+                if 200 <= response.status_code < 300:
+                    print_success(f"Created {thing_id}")
+                else:
+                    print_error(
+                        f"Failed to create {thing_id}. Status: {response.status_code}"
                     )
-                    thing_id = thing_data.get("thingId")
-
-                    if not thing_id:
-                        self.logger.warning(
-                            f"❌ Skipping {json_file} - no 'thingId' found"
-                        )
-                        continue
-
-                    self.logger.info(
-                        f"📡 Uploading {thing_id} from {Path(json_file).name}..."
-                    )
-
-                    # Create the thing
-                    success = self.client.create_thing(thing_id, thing_data)
-                    if success:
-                        self.logger.info(f"✅ Done with {thing_id}")
-                    else:
-                        self.logger.error(f"❌ Failed to create {thing_id}")
-                        return False
-
-                    self.logger.info("----------------------------")
-
-                except Exception as e:
-                    self.logger.error(f"❌ Error processing {json_file}: {e}")
                     return False
 
-            return True
+                print_info("----------------------------")
 
-        except Exception as e:
-            self.logger.error(f"❌ Error in bulk create: {e}")
-            return False
-
-    def search_things(
-        self, filter_expr: str = None, description: str = "all things"
-    ) -> bool:
-        """
-        Search things with optional filter.
-
-        Args:
-            filter_expr: Optional filter expression
-            description: Description of the search for logging
-        """
-        try:
-            self.log_section(f"Search: {description}")
-            results = self.client.search_things(filter_expr)
-
-            if results:
-                print(json.dumps(results, indent=2))
-                return True
-            else:
-                self.logger.warning("No results found")
-                return True
-        except Exception as e:
-            self.logger.error(f"❌ Error searching things: {e}")
-            return False
-
-    def run(self):
-        """Run the Fleet Management example."""
-        try:
-            operations = [
-                ("Creating Policy", lambda: self.create_policy(self.policy_id)),
-                ("Bulk Creating Things", lambda: self.bulk_create_things()),
-                (
-                    "Update sensor-002 reported state",
-                    lambda: self.update_thing_property(
-                        self.sensor002_id, "features/humidity/properties/value", 70.1
-                    ),
-                ),
-            ]
-
-            if not self.run_operations(operations):
+            except Exception as e:
+                print_error(f"Error processing {json_file}: {e}")
                 return False
 
-            # Search operations
-            search_operations = [
-                (
-                    "Find all things",
-                    lambda: self.search_things(description="Find all things"),
-                ),
-                (
-                    "Find all things with manufacturer: 'ABC'",
-                    lambda: self.search_things(
-                        filter_expr="eq(attributes/manufacturer,'ABC')",
-                        description="Find all things with manufacturer: 'ABC'",
-                    ),
-                ),
-                (
-                    "Find all things where temperature > 20 Celsius",
-                    lambda: self.search_things(
-                        filter_expr="gt(features/temperature/properties/value,20)",
-                        description="Find all things where temperature > 20 Celsius",
-                    ),
-                ),
-                (
-                    "Find all things in the 'Living Room'",
-                    lambda: self.search_things(
-                        filter_expr="eq(attributes/location,'Living Room')",
-                        description="Find all things in the 'Living Room'",
-                    ),
-                ),
-                (
-                    "Combine queries (temperature > 20 AND location = 'Living Room')",
-                    lambda: self.search_things(
-                        filter_expr="and(gt(features/temperature/properties/value,20),eq(attributes/location,'Living Room'))",
-                        description="Combine queries (temperature > 20 AND location = 'Living Room')",
-                    ),
-                ),
-            ]
+        return True
 
-            if not self.run_operations(search_operations):
-                return False
+    except Exception as e:
+        print_error(f"Error in bulk create: {e}")
+        return False
 
-            self.log_section("Example 7 completed!")
+
+def search_things_with_filter(
+    filter_expr: str = None, description: str = "all things"
+) -> bool:
+    """
+    Search things with optional filter.
+
+    Args:
+        filter_expr: Optional filter expression
+        description: Description of the search for logging
+    """
+    try:
+        print_section(f"Search: {description}")
+        results = search_things(filter_expr)
+
+        if results and results.get("items"):
+            print_info(f"Found {len(results['items'])} things")
+            print(json.dumps(results, indent=2))
             return True
-
-        except Exception as e:
-            self.logger.error(f"❌ Error running example: {e}")
-            return False
+        else:
+            print_info("No results found")
+            return True
+    except Exception as e:
+        print_error(f"Error searching things: {e}")
+        return False
 
 
 def main():
-    """Main entry point."""
-    with FleetManagementExample() as example:
-        success = example.run()
-        sys.exit(0 if success else 1)
+    """Main entry point for Fleet Management example."""
+    try:
+        # Get configuration from environment variables
+        policy_id = os.getenv("SENSOR_POLICY_ID")
+        sensor002_id = os.getenv("SENSOR_002_ID")
+
+        if not policy_id or not sensor002_id:
+            print_error(
+                "Missing required environment variables: SENSOR_POLICY_ID or SENSOR_002_ID"
+            )
+            print_info("Please check your .env file or environment variables")
+            sys.exit(1)
+
+        print_section("Example 7: Fleet Management")
+        print_info(
+            "This example demonstrates fleet management capabilities in Eclipse Ditto"
+        )
+        print_info(f"Using policy ID: {policy_id}")
+        print_info(f"Using sensor002 ID: {sensor002_id}")
+        print_info(
+            "This will create multiple sensors and demonstrate search capabilities"
+        )
+
+        # Get current directory for file operations
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Define the operations to run
+        operations = [
+            ("Creating Policy", create_policy, policy_id, "policy.json", current_dir),
+            ("Bulk Creating Things", bulk_create_things, current_dir),
+            (
+                "Update sensor-002 reported state",
+                update_thing_property,
+                sensor002_id,
+                "features/humidity/properties/value",
+                70.1,
+            ),
+        ]
+
+        # Run all operations
+        success = run_operations(operations)
+
+        if not success:
+            sys.exit(1)
+
+        # Search operations
+        print_section("Search Operations")
+        print_info("Demonstrating various search capabilities")
+
+        search_operations = [
+            (
+                "Find all things",
+                lambda: search_things_with_filter(description="Find all things"),
+            ),
+            (
+                "Find all things with manufacturer: 'ABC'",
+                lambda: search_things_with_filter(
+                    filter_expr="eq(attributes/manufacturer,'ABC')",
+                    description="Find all things with manufacturer: 'ABC'",
+                ),
+            ),
+            (
+                "Find all things where temperature > 20 Celsius",
+                lambda: search_things_with_filter(
+                    filter_expr="gt(features/temperature/properties/value,20)",
+                    description="Find all things where temperature > 20 Celsius",
+                ),
+            ),
+            (
+                "Find all things in the 'Living Room'",
+                lambda: search_things_with_filter(
+                    filter_expr="eq(attributes/location,'Living Room')",
+                    description="Find all things in the 'Living Room'",
+                ),
+            ),
+            (
+                "Combine queries (temperature > 20 AND location = 'Living Room')",
+                lambda: search_things_with_filter(
+                    filter_expr="and(gt(features/temperature/properties/value,20),eq(attributes/location,'Living Room'))",
+                    description="Combine queries (temperature > 20 AND location = 'Living Room')",
+                ),
+            ),
+        ]
+
+        # Run search operations
+        search_success = run_operations(search_operations)
+
+        if search_success:
+            print_section("Example 7 completed successfully!")
+            print_success("Fleet management example completed")
+            print_info(
+                "Multiple sensors were created and various search queries were demonstrated"
+            )
+            print_info("This shows how to manage large fleets of IoT devices")
+        else:
+            print_error("Example 7 search operations failed")
+            sys.exit(1)
+
+    except KeyboardInterrupt:
+        print_error("Example interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        print_error(f"Unexpected error in Example 7: {e}")
+        sys.exit(1)
+    finally:
+        cleanup()
 
 
 if __name__ == "__main__":

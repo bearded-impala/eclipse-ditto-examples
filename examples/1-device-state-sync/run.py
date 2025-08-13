@@ -20,51 +20,76 @@ This shows the basic pattern of device state synchronization in Eclipse Ditto.
 import os
 import sys
 
-from utils.ditto_operations import ExampleRunner
-
-
-class DeviceStateSyncExample(ExampleRunner):
-    """Example 1: Device State Sync"""
-
-    def __init__(self):
-        super().__init__("Device State Sync")
-        self.sensor_id = os.getenv("SENSOR_001_ID")
-        self.policy_id = os.getenv("SENSOR_001_POLICY_ID")
-
-    def run(self):
-        """Run the Device State Sync example."""
-        try:
-            operations = [
-                ("Creating Policy", lambda: self.create_policy(self.policy_id)),
-                ("Creating Thing", lambda: self.create_thing(self.sensor_id)),
-                (
-                    "Updating Reported State (temperature)",
-                    lambda: self.update_thing_property(
-                        self.sensor_id, "features/temperature/properties/value", 22.8
-                    ),
-                ),
-                (
-                    "Retrieving Digital Twin State",
-                    lambda: self.get_thing(self.sensor_id),
-                ),
-            ]
-
-            if not self.run_operations(operations):
-                return False
-
-            self.log_section("Example 1 completed!")
-            return True
-
-        except Exception as e:
-            self.logger.error(f"❌ Error running example: {e}")
-            return False
+from utils.ditto_operations import (
+    cleanup,
+    create_policy,
+    create_thing,
+    get_thing,
+    print_error,
+    print_info,
+    print_section,
+    print_success,
+    run_operations,
+    update_thing_property,
+)
 
 
 def main():
-    """Main entry point."""
-    with DeviceStateSyncExample() as example:
-        success = example.run()
-        sys.exit(0 if success else 1)
+    """Main entry point for Device State Sync example."""
+    try:
+        # Get configuration from environment variables
+        sensor_id = os.getenv("SENSOR_001_ID")
+        policy_id = os.getenv("SENSOR_001_POLICY_ID")
+
+        if not sensor_id or not policy_id:
+            print_error(
+                "Missing required environment variables: SENSOR_001_ID or SENSOR_001_POLICY_ID"
+            )
+            print_info("Please check your .env file or environment variables")
+            sys.exit(1)
+
+        print_section("Example 1: Device State Sync")
+        print_info("This example demonstrates basic device state synchronization")
+        print_info(f"Using sensor ID: {sensor_id}")
+        print_info(f"Using policy ID: {policy_id}")
+
+        # Get current directory for file operations
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Define the operations to run
+        operations = [
+            ("Creating Policy", create_policy, policy_id, "policy.json", current_dir),
+            ("Creating Thing", create_thing, sensor_id, "thing.json", current_dir),
+            (
+                "Updating Reported State (temperature)",
+                update_thing_property,
+                sensor_id,
+                "features/temperature/properties/value",
+                22.8,
+            ),
+            ("Retrieving Digital Twin State", get_thing, sensor_id),
+        ]
+
+        # Run all operations
+        success = run_operations(operations)
+
+        if success:
+            print_section("Example 1 completed successfully!")
+            print_success("Device state synchronization example completed")
+            print_info(
+                "The sensor's temperature was updated and retrieved successfully"
+            )
+        else:
+            sys.exit(1)
+
+    except KeyboardInterrupt:
+        print_error("Example interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        print_error(f"Unexpected error in Example 1: {e}")
+        sys.exit(1)
+    finally:
+        cleanup()
 
 
 if __name__ == "__main__":

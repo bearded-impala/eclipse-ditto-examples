@@ -20,61 +20,89 @@ This shows the outbox pattern for reliable command delivery.
 import os
 import sys
 
-from utils.ditto_operations import ExampleRunner
-
-
-class OutboxPatternExample(ExampleRunner):
-    """Example 4: Outbox Pattern"""
-
-    def __init__(self):
-        super().__init__("Outbox Pattern")
-        self.doorlock_id = os.getenv("DOORLOCK_001_ID")
-        self.policy_id = os.getenv("DOORLOCK_001_POLICY_ID")
-
-    def run(self):
-        """Run the Outbox Pattern example."""
-        try:
-            operations = [
-                ("Creating Policy", lambda: self.create_policy(self.policy_id)),
-                ("Creating Thing", lambda: self.create_thing(self.doorlock_id)),
-                (
-                    "Application issues command (sets desired state - Outbox)",
-                    lambda: self.update_thing_property(
-                        self.doorlock_id,
-                        "features/lockState/properties/status/desired",
-                        "LOCKED",
-                    ),
-                ),
-                (
-                    "Simulate Device Action and Report (Completing the Outbox cycle)",
-                    lambda: self.update_thing_property(
-                        self.doorlock_id,
-                        "features/lockState/properties/status/value",
-                        "LOCKED",
-                    ),
-                ),
-                (
-                    "Retrieving Digital Twin State",
-                    lambda: self.get_thing(self.doorlock_id),
-                ),
-            ]
-
-            if not self.run_operations(operations):
-                return False
-
-            self.log_section("Example 4 completed!")
-            return True
-
-        except Exception as e:
-            self.logger.error(f"❌ Error running example: {e}")
-            return False
+from utils.ditto_operations import (
+    cleanup,
+    create_policy,
+    create_thing,
+    get_thing,
+    print_error,
+    print_info,
+    print_section,
+    print_success,
+    run_operations,
+    update_thing_property,
+)
 
 
 def main():
-    """Main entry point."""
-    with OutboxPatternExample() as example:
-        success = example.run()
-        sys.exit(0 if success else 1)
+    """Main entry point for Outbox Pattern example."""
+    try:
+        # Get configuration from environment variables
+        doorlock_id = os.getenv("DOORLOCK_001_ID")
+        policy_id = os.getenv("DOORLOCK_001_POLICY_ID")
+
+        if not doorlock_id or not policy_id:
+            print_error(
+                "Missing required environment variables: DOORLOCK_001_ID or DOORLOCK_001_POLICY_ID"
+            )
+            print_info("Please check your .env file or environment variables")
+            sys.exit(1)
+
+        print_section("Example 4: Outbox Pattern")
+        print_info(
+            "This example demonstrates the outbox pattern for reliable command delivery"
+        )
+        print_info(f"Using doorlock ID: {doorlock_id}")
+        print_info(f"Using policy ID: {policy_id}")
+        print_info(
+            "The outbox pattern ensures commands are delivered even when devices are offline"
+        )
+
+        # Get current directory for file operations
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Define the operations to run
+        operations = [
+            ("Creating Policy", create_policy, policy_id, "policy.json", current_dir),
+            ("Creating Thing", create_thing, doorlock_id, "thing.json", current_dir),
+            (
+                "Application issues command (sets desired state - Outbox)",
+                update_thing_property,
+                doorlock_id,
+                "features/lockState/properties/status/desired",
+                "LOCKED",
+            ),
+            (
+                "Simulate Device Action and Report (Completing the Outbox cycle)",
+                update_thing_property,
+                doorlock_id,
+                "features/lockState/properties/status/value",
+                "LOCKED",
+            ),
+            ("Retrieving Digital Twin State", get_thing, doorlock_id),
+        ]
+
+        # Run all operations
+        success = run_operations(operations)
+
+        if success:
+            print_section("Example 4 completed successfully!")
+            print_success("Outbox pattern example completed")
+            print_info("The doorlock command was issued and confirmed successfully")
+            print_info(
+                "This demonstrates reliable command delivery using desired vs reported states"
+            )
+        else:
+            sys.exit(1)
+
+    except KeyboardInterrupt:
+        print_error("Example interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        print_error(f"Unexpected error in Example 4: {e}")
+        sys.exit(1)
+    finally:
+        cleanup()
 
 
 if __name__ == "__main__":
