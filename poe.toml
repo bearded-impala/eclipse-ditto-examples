@@ -10,6 +10,16 @@ help = "Shutdown local Ditto with horizontal scaling"
 cwd = "docker"
 cmd = "docker compose -f docker-compose.yml down"
 
+[tool.poe.tasks.start-ditto-ferret]
+help = "Initialize Ditto locally with horizontal scaling"
+cwd = "docker"
+cmd = "docker compose -f docker-compose-ferret.yml up"
+
+[tool.poe.tasks.stop-ditto-ferret]
+help = "Shutdown local Ditto with horizontal scaling"
+cwd = "docker"
+cmd = "docker compose -f docker-compose-ferret.yml down"
+
 # MQTT broker
 
 [tool.poe.tasks.start-mqtt-broker]

@@ -3,6 +3,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 benchmarks/
+postgres-data/
 
 *.py[cod]
 .DS_Store
