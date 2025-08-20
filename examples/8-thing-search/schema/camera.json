@@ -1,0 +1,246 @@
+{
+  "thingId": "org.eclipse.ditto:camera-a471",
+  "policyId": "org.eclipse.ditto:read-write-policy",
+  "attributes": {
+    "type": "camera",
+    "version": [
+      2,
+      3
+    ],
+    "status": [
+      true,
+      false
+    ],
+    "location": [
+      "Kitchen",
+      "Office",
+      "Garage",
+      "Lab"
+    ],
+    "manufacturer": [
+      "Acme Corp",
+      "HID"
+    ],
+    "timestamp": "2025-07-23T17:44:01.613Z"
+  },
+  "features": {
+    "video": {
+      "properties": {
+        "url": [
+          "http://eelslap.com/",
+          "https://isitchristmas.com/",
+          "https://www.trashloop.com/",
+          "https://willrobotstakemyjob.com/"
+        ],
+        "resolution": "720p",
+        "codec": [
+          "H.264",
+          "H.265"
+        ],
+        "frameRate": [
+          24,
+          30,
+          60,
+          90,
+          120,
+          240
+        ],
+        "streaming": [
+          true,
+          false
+        ],
+        "nightVision": [
+          true,
+          false
+        ],
+        "supportedResolutions": [
+          [
+            "480p",
+            "720p",
+            "1080p"
+          ],
+          [
+            "720p",
+            "1080p",
+            "4K"
+          ]
+        ]
+      }
+    },
+    "motionDetection": {
+      "properties": {
+        "enabled": [
+          true,
+          false
+        ],
+        "sensitivityLevel": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "zone": {
+          "id": [
+            "zone-1",
+            "zone-2",
+            "zone-3"
+          ],
+          "x": [
+            0.1,
+            0.6,
+            0.8
+          ],
+          "y": [
+            0.1,
+            0.2,
+            0.9
+          ],
+          "width": [
+            0.3,
+            0.2,
+            0.5
+          ],
+          "height": [
+            0.3,
+            0.4,
+            0.5
+          ]
+        },
+        "lastDetection": {
+          "timestamp": "2025-07-23T17:43:00Z",
+          "confidence": [
+            0.15,
+            0.25,
+            0.34,
+            0.50,
+            0.67,
+            0.75,
+            0.87,
+            0.95
+          ],
+          "type": [
+            "human",
+            "bear",
+            "dog",
+            "god",
+            "cat"
+          ]
+        }
+      }
+    },
+    "storage": {
+      "properties": {
+        "type": [
+          "microSD",
+          "cloud"
+        ],
+        "capacityGB": [
+          64,
+          128,
+          256,
+          512
+        ],
+        "usedSpaceGB": [
+          10,
+          20,
+          30,
+          40,
+          50
+        ],
+        "recordingMode": [
+          "event-based",
+          "continuous"
+        ],
+        "overwrite": [
+          true,
+          false
+        ]
+      }
+    },
+    "network": {
+      "properties": {
+        "ip": "192.168.1.42",
+        "mac": "00:1B:44:11:3A:B7",
+        "signalStrength": [0, 20, 40, 60, 80, 100],
+        "connected": [
+          true,
+          false
+        ],
+        "connectionType": [
+          "WiFi",
+          "Ethernet"
+        ]
+      }
+    },
+    "health": {
+      "properties": {
+        "uptimeSeconds": [452390, 123456, 987654, 654321, 321654, 789012, 123789],
+        "temperatureC": [9, 12, 25.2, 35.6, 20.1, 40.0, 30.5],
+        "cpuLoad": [0.37, 0.45, 0.55, 0.65, 0.75, 0.85],
+        "lastReboot": [
+          "2025-07-21T10:12:44Z",
+          "2024-12-21T05:12:46Z",
+          "2025-05-21T10:44:34Z",
+          "2025-03-21T11:12:49Z"
+        ],
+        "errors": [
+          "None"
+        ]
+      }
+    },
+    "firmware": {
+      "properties": {
+        "version": [
+          "v1.3.1",
+          "v1.2.8",
+          "v1.2.9-beta",
+          "v1.2.9-alpha"
+        ],
+        "lastUpdate": [
+          "2025-07-21T10:12:44Z",
+          "2024-12-21T05:12:46Z",
+          "2025-05-21T10:44:34Z",
+          "2025-03-21T11:12:49Z"
+        ],
+        "availableUpdate": {
+          "version": [
+            "v1.3.1",
+            "v1.2.8",
+            "v1.2.9-beta",
+            "v1.2.9-alpha"
+          ],
+          "releaseDate": [
+            "2025-07-20",
+            "2025-05-19",
+            "2024-12-21"
+          ],
+          "changelog": [
+            "Improved motion detection",
+            "Security patch CVE-2025-4201",
+            "Stream stability fixes"
+          ]
+        }
+      }
+    },
+    "analytics": {
+      "properties": {
+        "facesDetected": [15, 23, 42, 16, 30],
+        "peopleCount": {
+          "lastHour": [1, 2, 3, 4, 5, 6, 7],
+          "today": [7, 8, 9, 10, 11, 12, 13]
+        },
+        "intrusionEvent": [
+          {
+            "timestamp": "2025-07-23T03:12:01Z",
+            "zone": "zone-2"
+          },
+          {
+            "timestamp": "2025-07-23T07:58:23Z",
+            "zone": "zone-1"
+          }
+        ]
+      }
+    }
+  }
+}

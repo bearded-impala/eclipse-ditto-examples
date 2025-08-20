@@ -1,0 +1,66 @@
+{
+  "name": "Strategic Camera Queries",
+  "description": "Basic but strategic RQL queries for testing specific functionality",
+  "queries": [
+    {
+      "description": "Simple attribute equality - Find cameras in Office location",
+      "rql": "eq(attributes/location,'Office')"
+    },
+    {
+      "description": "Simple feature property equality - Find cameras with night vision enabled",
+      "rql": "eq(features/video/properties/nightVision,true)"
+    },
+    {
+      "description": "Numeric comparison - Find cameras with temperature above 30°C",
+      "rql": "gt(features/health/properties/temperatureC,30)"
+    },
+    {
+      "description": "String pattern matching - Find cameras with firmware containing 'beta'",
+      "rql": "like(features/firmware/properties/version,'*beta*')"
+    },
+    {
+      "description": "Array membership - Find cameras supporting 4K resolution",
+      "rql": "in(features/video/properties/supportedResolutions,'4K')"
+    },
+    {
+      "description": "Logical AND - Find cameras in Office with night vision",
+      "rql": "and(eq(attributes/location,'Office'),eq(features/video/properties/nightVision,true))"
+    },
+    {
+      "description": "Logical OR - Find cameras in Office OR Garage",
+      "rql": "or(eq(attributes/location,'Office'),eq(attributes/location,'Garage'))"
+    },
+    {
+      "description": "Logical NOT - Find cameras NOT manufactured by Acme Corp",
+      "rql": "not(eq(attributes/manufacturer,'Acme Corp'))"
+    },
+    {
+      "description": "Nested object property - Find cameras with motion detection enabled",
+      "rql": "eq(features/motionDetection/properties/enabled,true)"
+    },
+    {
+      "description": "Array element access - Find cameras with first intrusion event",
+      "rql": "exists(features/analytics/properties/intrusionEvent)"
+    },
+    {
+      "description": "Multiple numeric conditions - Find cameras with good health (uptime > 200000, temp < 30)",
+      "rql": "and(gt(features/health/properties/uptimeSeconds,200000),lt(features/health/properties/temperatureC,30))"
+    },
+    {
+      "description": "String and numeric combination - Find HID cameras with signal strength > 60",
+      "rql": "and(eq(attributes/manufacturer,'HID'),gt(features/network/properties/signalStrength,60))"
+    },
+    {
+      "description": "Complex nested query - Find Office cameras with 4K support and night vision",
+      "rql": "and(eq(attributes/location,'Office'),in(features/video/properties/supportedResolutions,'4K'),eq(features/video/properties/nightVision,true))"
+    },
+    {
+      "description": "Date range query - Find cameras with recent firmware updates",
+      "rql": "gt(features/firmware/properties/lastUpdate,'2025-07-01T00:00:00Z')"
+    },
+    {
+      "description": "Array element existence - Find cameras with intrusion events",
+      "rql": "exists(features/analytics/properties/intrusionEvents)"
+    }
+  ]
+}

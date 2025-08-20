@@ -16,7 +16,7 @@ services:
       replicas: 1
       resources:
         limits:
-          memory: 512m
+          memory: 1000m
     restart: on-failure
     networks:
       ditto_net:
@@ -35,7 +35,7 @@ services:
       replicas: 1
       resources:
         limits:
-          memory: 512m
+          memory: 1000m
     restart: on-failure
     networks:
       ditto_net:
@@ -52,7 +52,7 @@ services:
       replicas: 1
       resources:
         limits:
-          memory: 512m
+          memory: 1000m
     restart: always
     networks:
       ditto_net:
@@ -92,7 +92,7 @@ services:
       replicas: 1
       resources:
         limits:
-          memory: 512m
+          memory: 1000m
     networks:
       ditto_net:
         aliases:
@@ -130,7 +130,7 @@ services:
       replicas: 1
       resources:
         limits:
-          memory: 512m
+          memory: 1000m
     networks:
       ditto_net:
         aliases:
@@ -168,7 +168,7 @@ services:
       replicas: 1
       resources:
         limits:
-          memory: 512m
+          memory: 1000m
     networks:
       ditto_net:
         aliases:
@@ -206,7 +206,7 @@ services:
       replicas: 1
       resources:
         limits:
-          memory: 512m
+          memory: 1000m
     networks:
       ditto_net:
         aliases:

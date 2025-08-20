@@ -1,0 +1,30 @@
+{
+  "name": "General RQL Queries",
+  "description": "General purpose RQL queries for benchmarking Ditto performance",
+  "queries": [
+    {
+      "description": "Nested conditions using and, or, not - Example: Find Things with 1080p or 4K resolution, located in Office, with night vision enabled, and not manufactured by Acme Corp",
+      "rql": "and(or(eq(features/video/properties/resolution,'1080p'),eq(features/video/properties/resolution,'4K')),and(eq(attributes/location,'Office'),eq(features/video/properties/nightVision,true)),not(eq(attributes/manufacturer,'Acme Corp')))"
+    },
+    {
+      "description": "Deeply Nested Array and Object Query - Example: Find Things with night vision enabled, located in Office, with motion detection zone width > 0.4 and height > 0.3",
+      "rql": "and(eq(attributes/location,'Office'),eq(features/video/properties/nightVision,true),gt(features/motionDetection/properties/zone/width,0.4),gt(features/motionDetection/properties/zone/height,0.3))"
+    },
+    {
+      "description": "Multi-Feature, Multi-Type, Multi-Array Query - Example: Find Things manufactured by HID, with firmware update changelog containing 'Stream', network signal strength > 50, and faces detected < 10",
+      "rql": "and(eq(attributes/manufacturer,'HID'),ilike(features/firmware/properties/availableUpdate/changelog,'Stream*'),gt(features/network/properties/signalStrength,50),lt(features/analytics/properties/facesDetected,10))"
+    },
+    {
+      "description": "Complex Numeric and Date Range Query - Example: Find Things with uptime > 10000 seconds, temperature between 40 and 50°C, used space between 30 and 100GB, intrusion event timestamp between 2025-07-15 and 2025-07-20",
+      "rql": "and(gt(features/health/properties/uptimeSeconds,10000),gt(features/health/properties/temperatureC,40),lt(features/health/properties/temperatureC,50),gt(features/storage/properties/usedSpaceGB,30),lt(features/storage/properties/usedSpaceGB,100),gt(features/analytics/properties/intrusionEvents/0/timestamp,'2025-07-15T00:00:00Z'),lt(features/analytics/properties/intrusionEvents/0/timestamp,'2025-07-20T00:00:00Z'))"
+    },
+    {
+      "description": "Full-Text and Array Membership Query - Example: Find Things with 4K resolution, H.264 codec, event-based recording mode, and firmware update changelog containing 'stability'",
+      "rql": "and(in(features/video/properties/supportedResolutions,'4K'),eq(features/video/properties/codec,'H.264'),eq(features/storage/properties/recordingMode,'event-based'),ilike(features/firmware/properties/availableUpdate/changelog,'*stability*'))"
+    },
+    {
+      "description": "Extreme Query: All-at-once - Example: Find Things with 4K resolution, H.264 codec, event-based recording mode, firmware update changelog containing 'stability', located in Office or Garage, manufactured by Acme Corp, with night vision enabled, and not manufactured by Acme Corp",
+      "rql": "and(or(and(eq(attributes/status,true),eq(attributes/location,'Office'),eq(attributes/manufacturer,'Acme Corp'),in(features/video/properties/supportedResolutions,'4K'),like(features/firmware/properties/availableUpdate/changelog,'*patch*'),exists(features/analytics/properties/intrusionEvents),gt(features/health/properties/uptimeSeconds,10000),gt(features/analytics/properties/facesDetected,5)),and(eq(attributes/status,true),eq(attributes/location,'Garage'),eq(attributes/manufacturer,'Acme Corp'),eq(features/video/properties/nightVision,true),in(features/video/properties/supportedResolutions,'1080p'),like(features/firmware/properties/availableUpdate/changelog,'*patch*'),exists(features/analytics/properties/intrusionEvents/0),gt(features/health/properties/uptimeSeconds,10000),gt(features/analytics/properties/facesDetected,5)),not(eq(features/motionDetection/properties/lastDetection/type,'god'))))"
+    }
+  ]
+}

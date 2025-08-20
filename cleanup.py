@@ -6,12 +6,11 @@ This script directly calls the cleanup function without confirmation prompts.
 Use this for automated cleanup or when you're sure you want to clean up.
 """
 
-import json
 import os
 import sys
 
 import httpx
-from dotenv import load_dotenv
+from tqdm import tqdm
 
 from utils.ditto_operations import (
     AUTH_PASS,
@@ -27,40 +26,82 @@ from utils.ditto_operations import (
 def cleanup_ditto():
     """Clean up all things, policies, and connections from Ditto."""
     try:
-        print_section("Ditto Cleanup")
         print_info("🧹 Starting Ditto cleanup...")
 
         # Create HTTP session
         session = httpx.Client(timeout=30.0)
 
-        # 1. Delete all things
+        # 1. Delete all things (paginated) with progress bar
         print_section("Deleting All Things")
         print_info("📦 Deleting all things...")
 
-        # Get all things
+        # Determine total number of things for progress bar (if available)
+        total_things = None
+        count_url = f"{DITTO_URL}/search/things/count"
+        try:
+                count_resp = session.get(count_url, auth=(AUTH_USER, AUTH_PASS))
+                if count_resp.status_code == 200:
+                        text = count_resp.text.strip()
+                        digits = "".join(ch for ch in text if ch.isdigit())
+                        total_things = int(digits) if digits else None
+        except Exception:
+                total_things = None
+
+        page_size = 200
         search_url = f"{DITTO_URL}/search/things"
-        response = session.get(
-            search_url, auth=(AUTH_USER, AUTH_PASS), params={"option": "size(200)"}
-        )
 
-        if response.status_code == 200:
-            data = response.json()
-            things = data.get("items", [])
-            print_info(f"Found {len(things)} things to delete")
+        # Run async deletion with bounded concurrency
+        import asyncio
 
-            for thing in things:
-                thing_id = thing.get("thingId")
-                if thing_id:
-                    delete_url = f"{DITTO_URL}/things/{thing_id}"
-                    delete_response = session.delete(
-                        delete_url, auth=(AUTH_USER, AUTH_PASS)
-                    )
-                    if delete_response.status_code in (204, 404):
-                        print_success(f"Deleted thing: {thing_id}")
-                    else:
-                        print_error(f"Failed to delete thing: {thing_id}")
-        else:
-            print_info("No things found to delete")
+        async def _delete_all_things_async() -> tuple[int, int]:
+                max_concurrent = int(os.getenv("DITTO_CLEANUP_CONCURRENCY", "50"))
+                semaphore = asyncio.Semaphore(max_concurrent)
+                deleted = 0
+                failed = 0
+                cursor = None
+                from tqdm import tqdm
+
+                pbar = tqdm(total=total_things, desc="Deleting things", unit="thing")
+                async with httpx.AsyncClient(timeout=30.0) as aclient:
+                        async def delete_one(thing_id: str):
+                                nonlocal deleted, failed
+                                async with semaphore:
+                                        try:
+                                                resp = await aclient.delete(f"{DITTO_URL}/things/{thing_id}", auth=(AUTH_USER, AUTH_PASS))
+                                                if resp.status_code in (204, 404):
+                                                        deleted += 1
+                                                else:
+                                                        failed += 1
+                                        except Exception:
+                                                failed += 1
+                                        finally:
+                                                pbar.update(1)
+
+                        while True:
+                                params = {"option": f"size({page_size})"}
+                                if cursor:
+                                        params["option"] += f",cursor({cursor})"
+                                resp = await aclient.get(search_url, auth=(AUTH_USER, AUTH_PASS), params=params)
+                                if resp.status_code != 200:
+                                        break
+                                data = resp.json()
+                                items = data.get("items", [])
+                                if not items:
+                                        break
+                                # Dispatch deletions for this page
+                                tasks = [asyncio.create_task(delete_one(it.get("thingId"))) for it in items if it.get("thingId")]
+                                if tasks:
+                                        await asyncio.gather(*tasks)
+                                cursor = data.get("cursor")
+                                if not cursor:
+                                        break
+                pbar.close()
+                return deleted, failed
+
+        deleted, failed = asyncio.run(_delete_all_things_async())
+        print_success(f"Deleted things: {deleted}")
+        if failed:
+                print_error(f"Failed deletions: {failed}")
 
         # 2. Delete known policies
         print_section("Deleting Known Policies")
