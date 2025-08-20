@@ -118,6 +118,7 @@ def cleanup_ditto():
         print_info("🔐 Deleting known policies...")
 
         known_policies = [
+            os.getenv("READ_WRITE_POLICY_ID"),
             os.getenv("SENSOR_001_POLICY_ID"),
             os.getenv("LIGHT_001_POLICY_ID"),
             os.getenv("VEHICLE_001_POLICY_ID"),
