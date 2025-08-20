@@ -7,7 +7,7 @@ This repository contains comprehensive examples and experiments with Eclipse Dit
 ### Prerequisites
 
 - **Docker & Docker Compose** - For running Eclipse Ditto services
-- **Python 3.12+** - For running examples
+- **Python 3.9+** - For running examples
 - **UV Package Manager** - Fast Python package manager
 
 ### Setup
