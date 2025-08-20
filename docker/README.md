@@ -65,8 +65,20 @@ Check the resource consumption in order to find out if you e.g. require more mem
 docker stats
 ```
 
-## Stop Eclipse Ditto
+### Stop Eclipse Ditto
 
 ```bash
 docker-compose -f docker-compose.yml down
+```
+
+## Start Eclipse Ditto with FerretDB
+
+```bash
+docker compose -f docker-compose-ferret.yml up
+```
+
+### Stop Eclipse Ditto with FerretDB
+
+```bash
+docker-compose -f docker-compose-ferret.yml down
 ```

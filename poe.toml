@@ -41,65 +41,65 @@ cmd = "docker rm -f mosquitto-broker"
 [tool.poe.tasks.e1]
 help = "Device State Sync"
 cwd = "examples/1-device-state-sync"
-cmd = "uv run run.py"
+cmd = "python run.py"
 
 # Example 2
 [tool.poe.tasks.e2]
 help = "Remote Device Control"
 cwd = "examples/2-remote-device-control"
-cmd = "uv run run.py"
+cmd = "python run.py"
 
 # Example 3
 [tool.poe.tasks.e3]
 help = "Digital Twin Enhancement"
 cwd = "examples/3-digital-twin-enhancement"
-cmd = "uv run run.py"
+cmd = "python run.py"
 
 # Example 4
 [tool.poe.tasks.e4]
 help = "Outbox Pattern"
 cwd = "examples/4-outbox-pattern"
-cmd = "uv run run.py"
+cmd = "python run.py"
 
 # Example 5
 [tool.poe.tasks.e5]
 help = "Inbox Outbox Flow"
 cwd = "examples/5-inbox-outbox-flow"
-cmd = "uv run run.py"
+cmd = "python run.py"
 
 # Example 6
 [tool.poe.tasks.e6]
 help = "MQTT Connection"
 cwd = "examples/6-mqtt-connection"
-cmd = "uv run run.py"
+cmd = "python run.py"
 
 # Example 7
 [tool.poe.tasks.e7]
 help = "Fleet Management"
 cwd = "examples/7-fleet-management"
-cmd = "uv run run.py"
+cmd = "python run.py"
 
 # Example 8
 [tool.poe.tasks.create-things]
 help = "Create Things from schema"
 cwd = "examples/8-thing-search"
-cmd = "uv run create_things.py"
+cmd = "python create_things.py"
 
 [tool.poe.tasks.test-queries]
 help = "Create Things from schema"
 cwd = "examples/8-thing-search"
-cmd = "uv run test_queries.py"
+cmd = "python test_queries.py"
 
 # Helpers
 
 [tool.poe.tasks.ruff]
 help = "Run all ruff operations: format, check, and fix"
 sequence = [
-    {cmd = "uv run ruff check . --fix --unsafe-fixes"},
-    {cmd = "uv run ruff format ."},  # Format after fixes
-    {cmd = "uv run ruff check ."},   # Final check
+    {cmd = "ruff check . --fix --unsafe-fixes"},
+    {cmd = "ruff format ."},  # Format after fixes
+    {cmd = "ruff check ."},   # Final check
 ]
 
 [tool.poe.tasks.cleanup]
 help = "Clean up all things, policies, and connections from Ditto"
-cmd = "uv run cleanup.py"
+cmd = "python cleanup.py"
