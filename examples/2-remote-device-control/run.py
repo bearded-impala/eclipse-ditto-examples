@@ -28,7 +28,6 @@ from utils.ditto_operations import (
     print_info,
     print_section,
     print_success,
-    run_operations,
     update_thing_property,
 )
 
@@ -57,34 +56,36 @@ def main():
         # Get current directory for file operations
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # Define the operations to run
-        operations = [
-            ("Creating Policy", create_policy, policy_id, "policy.json", current_dir),
-            ("Creating Thing", create_thing, light_id, "thing.json", current_dir),
-            (
-                "Updating Desired State (onOff)",
-                update_thing_property,
-                light_id,
-                "features/onOff/properties/status/desired",
-                True,
-            ),
-            ("Retrieving Digital Twin State", get_thing, light_id),
-        ]
-
-        # Run all operations
-        success = run_operations(operations)
-
-        if success:
-            print_section("Example 2 completed successfully!")
-            print_success("Remote device control example completed")
-            print_info(
-                "The light's desired state was updated and retrieved successfully"
-            )
-            print_info(
-                "In a real scenario, the device would receive this command and turn on"
-            )
-        else:
+        # Step 1: Create Policy
+        if not create_policy(policy_id, "policy.json", current_dir):
+            print_error("Failed to create policy")
             sys.exit(1)
+
+        # Step 2: Create Thing
+        if not create_thing(light_id, "thing.json", current_dir):
+            print_error("Failed to create thing")
+            sys.exit(1)
+
+        # Step 3: Update Desired State (onOff)
+        if not update_thing_property(
+            light_id, "features/onOff/properties/status/desired", True
+        ):
+            print_error("Failed to update desired state")
+            sys.exit(1)
+
+        # Step 4: Retrieve Digital Twin State
+        if not get_thing(light_id):
+            print_error("Failed to retrieve thing")
+            sys.exit(1)
+
+        print_section("Example 2 completed successfully!")
+        print_success("Remote device control example completed")
+        print_info(
+            "The light's desired state was updated and retrieved successfully"
+        )
+        print_info(
+            "In a real scenario, the device would receive this command and turn on"
+        )
 
     except KeyboardInterrupt:
         print_error("Example interrupted by user")

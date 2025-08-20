@@ -29,7 +29,6 @@ from utils.ditto_operations import (
     print_info,
     print_section,
     print_success,
-    run_operations,
     update_thing_property,
 )
 
@@ -56,31 +55,31 @@ def main():
         # Get current directory for file operations
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # Define the operations to run
-        operations = [
-            ("Creating Policy", create_policy, policy_id, "policy.json", current_dir),
-            ("Creating Thing", create_thing, sensor_id, "thing.json", current_dir),
-            (
-                "Updating Reported State (temperature)",
-                update_thing_property,
-                sensor_id,
-                "features/temperature/properties/value",
-                22.8,
-            ),
-            ("Retrieving Digital Twin State", get_thing, sensor_id),
-        ]
-
-        # Run all operations
-        success = run_operations(operations)
-
-        if success:
-            print_section("Example 1 completed successfully!")
-            print_success("Device state synchronization example completed")
-            print_info(
-                "The sensor's temperature was updated and retrieved successfully"
-            )
-        else:
+        # Step 1: Create Policy
+        if not create_policy(policy_id, "policy.json", current_dir):
+            print_error("Failed to create policy")
             sys.exit(1)
+
+        # Step 2: Create Thing
+        if not create_thing(sensor_id, "thing.json", current_dir):
+            print_error("Failed to create thing")
+            sys.exit(1)
+
+        # Step 3: Update Reported State (temperature)
+        if not update_thing_property(
+            sensor_id, "features/temperature/properties/value", 22.8
+        ):
+            print_error("Failed to update temperature")
+            sys.exit(1)
+
+        # Step 4: Retrieve Digital Twin State
+        if not get_thing(sensor_id):
+            print_error("Failed to retrieve thing")
+            sys.exit(1)
+
+        print_section("Example 1 completed successfully!")
+        print_success("Device state synchronization example completed")
+        print_info("The sensor's temperature was updated and retrieved successfully")
 
     except KeyboardInterrupt:
         print_error("Example interrupted by user")

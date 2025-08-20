@@ -30,7 +30,6 @@ from utils.ditto_operations import (
     print_info,
     print_section,
     print_success,
-    run_operations,
 )
 
 
@@ -147,7 +146,7 @@ def main():
         print_info(f"Using policy ID: {policy_id}")
         print_info(f"Using MQTT topic prefix: {mqtt_topic_prefix}")
 
-        # Start MQTT Broker
+        # Step 1: Start MQTT Broker
         if not start_mqtt_broker():
             print_error("Failed to start MQTT broker")
             sys.exit(1)
@@ -155,35 +154,27 @@ def main():
         # Get current directory for file operations
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # Define the operations to run
-        operations = [
-            (
-                "Creating Ditto policy",
-                create_policy,
-                policy_id,
-                "policy.json",
-                current_dir,
-            ),
-            (
-                "Creating Ditto things",
-                lambda: create_thing_from_file(sensor01_id, "sensor01.json")
-                and create_thing_from_file(sensor02_id, "sensor02.json"),
-            ),
-            (
-                "Creating MQTT connections",
-                lambda: create_connection_from_file(
-                    "connection_source.json", "MQTT source"
-                )
-                and create_connection_from_file(
-                    "connection_target.json", "MQTT target"
-                ),
-            ),
-        ]
+        # Step 2: Create Ditto policy
+        if not create_policy(policy_id, "policy.json", current_dir):
+            print_error("Failed to create policy")
+            sys.exit(1)
 
-        # Run all operations
-        success = run_operations(operations)
+        # Step 3: Create Ditto things
+        if not create_thing_from_file(sensor01_id, "sensor01.json"):
+            print_error("Failed to create sensor01")
+            sys.exit(1)
+        
+        if not create_thing_from_file(sensor02_id, "sensor02.json"):
+            print_error("Failed to create sensor02")
+            sys.exit(1)
 
-        if not success:
+        # Step 4: Create MQTT connections
+        if not create_connection_from_file("connection_source.json", "MQTT source"):
+            print_error("Failed to create MQTT source connection")
+            sys.exit(1)
+        
+        if not create_connection_from_file("connection_target.json", "MQTT target"):
+            print_error("Failed to create MQTT target connection")
             sys.exit(1)
 
         # Setup Complete
@@ -203,7 +194,7 @@ def main():
         print_info("")
         print_info("🧹 When done testing, clean up with:")
         print_info("  uv run poe stop-mqtt-broker")
-        print_info("  uv run poe cleanup-ditto")
+        print_info("  uv run poe cleanup")
 
     except KeyboardInterrupt:
         print_error("Example interrupted by user")

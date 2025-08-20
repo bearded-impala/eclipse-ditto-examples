@@ -35,7 +35,6 @@ from utils.ditto_operations import (
     print_info,
     print_section,
     print_success,
-    run_operations,
     update_thing_property,
 )
 
@@ -65,41 +64,43 @@ def main():
         # Get current directory for file operations
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # Define the operations to run
-        operations = [
-            ("Creating Policy", create_policy, policy_id, "policy.json", current_dir),
-            ("Creating Thing", create_thing, kettle_id, "thing.json", current_dir),
-            ("Creating Connection", create_connection, "connection.json", current_dir),
-            (
-                "App sets desired temperature (Outbox action)",
-                update_thing_property,
-                kettle_id,
-                "features/temperature/properties/desired",
-                95,
-            ),
-            (
-                "Device reports temperature (Telemetry/Inbox action)",
-                update_thing_property,
-                kettle_id,
-                "features/temperature/properties/value",
-                92.5,
-            ),
-            (
-                "Device sends activity event (Event/Inbox action)",
-                update_thing_property,
-                kettle_id,
-                "features/activityLog/properties/lastEvent",
-                "Boiling started",
-            ),
-        ]
-
-        # Run all operations
-        success = run_operations(operations)
-
-        if not success:
+        # Step 1: Create Policy
+        if not create_policy(policy_id, "policy.json", current_dir):
+            print_error("Failed to create policy")
             sys.exit(1)
 
-        # Polling Thing's State (5 times, 2s interval)
+        # Step 2: Create Thing
+        if not create_thing(kettle_id, "thing.json", current_dir):
+            print_error("Failed to create thing")
+            sys.exit(1)
+
+        # Step 3: Create Connection
+        if not create_connection("connection.json", current_dir):
+            print_error("Failed to create connection")
+            sys.exit(1)
+
+        # Step 4: App sets desired temperature (Outbox action)
+        if not update_thing_property(
+            kettle_id, "features/temperature/properties/desired", 95
+        ):
+            print_error("Failed to set desired temperature")
+            sys.exit(1)
+
+        # Step 5: Device reports temperature (Telemetry/Inbox action)
+        if not update_thing_property(
+            kettle_id, "features/temperature/properties/value", 92.5
+        ):
+            print_error("Failed to update reported temperature")
+            sys.exit(1)
+
+        # Step 6: Device sends activity event (Event/Inbox action)
+        if not update_thing_property(
+            kettle_id, "features/activityLog/properties/lastEvent", "Boiling started"
+        ):
+            print_error("Failed to update activity log")
+            sys.exit(1)
+
+        # Step 7: Polling Thing's State (5 times, 2s interval)
         print_section("Polling Thing's State (5 times, 2s interval)")
         print_info("Simulating application polling the digital twin for updates")
 

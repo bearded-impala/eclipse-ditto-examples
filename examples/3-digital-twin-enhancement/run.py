@@ -28,7 +28,6 @@ from utils.ditto_operations import (
     print_info,
     print_section,
     print_success,
-    run_operations,
     update_thing_property,
 )
 
@@ -70,32 +69,34 @@ def main():
         # Get current directory for file operations
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # Define the operations to run
-        operations = [
-            ("Creating Policy", create_policy, policy_id, "policy.json", current_dir),
-            ("Creating Thing", create_thing, vehicle_id, "thing.json", current_dir),
-            (
-                "Simulating External Service (Update Weather Data)",
-                update_thing_property,
-                vehicle_id,
-                "features/weather/properties",
-                weather_data,
-            ),
-            ("Retrieving Digital Twin State", get_thing, vehicle_id),
-        ]
-
-        # Run all operations
-        success = run_operations(operations)
-
-        if success:
-            print_section("Example 3 completed successfully!")
-            print_success("Digital twin enhancement example completed")
-            print_info("The vehicle's digital twin was enriched with weather data")
-            print_info(
-                "This demonstrates how external services can enhance digital twins"
-            )
-        else:
+        # Step 1: Create Policy
+        if not create_policy(policy_id, "policy.json", current_dir):
+            print_error("Failed to create policy")
             sys.exit(1)
+
+        # Step 2: Create Thing
+        if not create_thing(vehicle_id, "thing.json", current_dir):
+            print_error("Failed to create thing")
+            sys.exit(1)
+
+        # Step 3: Simulate External Service (Update Weather Data)
+        if not update_thing_property(
+            vehicle_id, "features/weather/properties", weather_data
+        ):
+            print_error("Failed to update weather data")
+            sys.exit(1)
+
+        # Step 4: Retrieve Digital Twin State
+        if not get_thing(vehicle_id):
+            print_error("Failed to retrieve thing")
+            sys.exit(1)
+
+        print_section("Example 3 completed successfully!")
+        print_success("Digital twin enhancement example completed")
+        print_info("The vehicle's digital twin was enriched with weather data")
+        print_info(
+            "This demonstrates how external services can enhance digital twins"
+        )
 
     except KeyboardInterrupt:
         print_error("Example interrupted by user")

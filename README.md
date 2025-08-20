@@ -7,14 +7,19 @@ This repository contains comprehensive examples and experiments with Eclipse Dit
 ### Prerequisites
 
 - **Docker & Docker Compose** - For running Eclipse Ditto services
-- **Python 3.13+** - For running examples
+- **Python 3.12+** - For running examples
 - **UV Package Manager** - Fast Python package manager
 
 ### Setup
 
 1. **Install UV (if missing):**
    ```bash
-   brew install uv  # macOS
+   # macOS
+   brew install uv
+
+   # Windows
+   powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
    # or visit https://docs.astral.sh/uv/getting-started/installation/
    ```
 
@@ -36,28 +41,3 @@ This repository contains comprehensive examples and experiments with Eclipse Dit
    ```bash
    uv run poe --help  # See all available commands
    ```
-
-## 🎯 Available Examples
-
-### Basic Examples
-- **Example 1**: Device State Sync - Basic state management
-- **Example 2**: Remote Device Control - Command and control patterns
-- **Example 3**: Digital Twin Enhancement - External data integration
-- **Example 4**: Outbox Pattern - Reliable command delivery
-
-### Communication Examples
-- **Example 5**: Inbox/Outbox Flow - Bidirectional communication
-- **Example 6**: MQTT Connection - Basic MQTT integration
-
-### Thing Search Examples
-- **Example 7**: Fleet Management - Managing device fleets
-
-## 🛠️ Running Examples
-
-```bash
-# Run individual examples
-uv run poe e1    # Device State Sync
-uv run poe e2    # Remote Device Control
-uv run poe e3    # Digital Twin Enhancement
-# ... etc
-```

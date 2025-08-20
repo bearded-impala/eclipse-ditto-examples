@@ -391,23 +391,6 @@ def search_things(
         return {"items": [], "cursor": None}
 
 
-def run_operations(operations: list) -> bool:
-    """
-    Run a list of operations with automatic error handling.
-
-    Args:
-        operations: List of tuples (description, operation_function, *args)
-
-    Returns:
-        True if all operations succeeded, False otherwise
-    """
-    for description, operation_func, *args in operations:
-        if not operation_func(*args):
-            print_error(f"Operation failed: {description}")
-            return False
-    return True
-
-
 def cleanup():
     """Clean up resources."""
     close_session()

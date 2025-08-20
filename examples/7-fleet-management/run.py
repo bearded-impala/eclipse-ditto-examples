@@ -31,7 +31,6 @@ from utils.ditto_operations import (
     print_info,
     print_section,
     print_success,
-    run_operations,
     search_things,
     update_thing_property,
 )
@@ -155,77 +154,70 @@ def main():
         # Get current directory for file operations
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # Define the operations to run
-        operations = [
-            ("Creating Policy", create_policy, policy_id, "policy.json", current_dir),
-            ("Bulk Creating Things", bulk_create_things, current_dir),
-            (
-                "Update sensor-002 reported state",
-                update_thing_property,
-                sensor002_id,
-                "features/humidity/properties/value",
-                70.1,
-            ),
-        ]
-
-        # Run all operations
-        success = run_operations(operations)
-
-        if not success:
+        # Step 1: Create Policy
+        if not create_policy(policy_id, "policy.json", current_dir):
+            print_error("Failed to create policy")
             sys.exit(1)
 
-        # Search operations
+        # Step 2: Bulk Create Things
+        if not bulk_create_things(current_dir):
+            print_error("Failed to bulk create things")
+            sys.exit(1)
+
+        # Step 3: Update sensor-002 reported state
+        if not update_thing_property(
+            sensor002_id, "features/humidity/properties/value", 70.1
+        ):
+            print_error("Failed to update sensor-002 humidity")
+            sys.exit(1)
+
+        # Step 4: Search Operations
         print_section("Search Operations")
         print_info("Demonstrating various search capabilities")
 
-        search_operations = [
-            (
-                "Find all things",
-                lambda: search_things_with_filter(description="Find all things"),
-            ),
-            (
-                "Find all things with manufacturer: 'ABC'",
-                lambda: search_things_with_filter(
-                    filter_expr="eq(attributes/manufacturer,'ABC')",
-                    description="Find all things with manufacturer: 'ABC'",
-                ),
-            ),
-            (
-                "Find all things where temperature > 20 Celsius",
-                lambda: search_things_with_filter(
-                    filter_expr="gt(features/temperature/properties/value,20)",
-                    description="Find all things where temperature > 20 Celsius",
-                ),
-            ),
-            (
-                "Find all things in the 'Living Room'",
-                lambda: search_things_with_filter(
-                    filter_expr="eq(attributes/location,'Living Room')",
-                    description="Find all things in the 'Living Room'",
-                ),
-            ),
-            (
-                "Combine queries (temperature > 20 AND location = 'Living Room')",
-                lambda: search_things_with_filter(
-                    filter_expr="and(gt(features/temperature/properties/value,20),eq(attributes/location,'Living Room'))",
-                    description="Combine queries (temperature > 20 AND location = 'Living Room')",
-                ),
-            ),
-        ]
-
-        # Run search operations
-        search_success = run_operations(search_operations)
-
-        if search_success:
-            print_section("Example 7 completed successfully!")
-            print_success("Fleet management example completed")
-            print_info(
-                "Multiple sensors were created and various search queries were demonstrated"
-            )
-            print_info("This shows how to manage large fleets of IoT devices")
-        else:
-            print_error("Example 7 search operations failed")
+        # Search 1: Find all things
+        if not search_things_with_filter(description="Find all things"):
+            print_error("Failed to search all things")
             sys.exit(1)
+
+        # Search 2: Find all things with manufacturer: 'ABC'
+        if not search_things_with_filter(
+            filter_expr="eq(attributes/manufacturer,'ABC')",
+            description="Find all things with manufacturer: 'ABC'",
+        ):
+            print_error("Failed to search by manufacturer")
+            sys.exit(1)
+
+        # Search 3: Find all things where temperature > 20 Celsius
+        if not search_things_with_filter(
+            filter_expr="gt(features/temperature/properties/value,20)",
+            description="Find all things where temperature > 20 Celsius",
+        ):
+            print_error("Failed to search by temperature")
+            sys.exit(1)
+
+        # Search 4: Find all things in the 'Living Room'
+        if not search_things_with_filter(
+            filter_expr="eq(attributes/location,'Living Room')",
+            description="Find all things in the 'Living Room'",
+        ):
+            print_error("Failed to search by location")
+            sys.exit(1)
+
+        # Search 5: Combine queries (temperature > 20 AND location = 'Living Room')
+        if not search_things_with_filter(
+            filter_expr="and(gt(features/temperature/properties/value,20),eq(attributes/location,'Living Room'))",
+            description="Combine queries (temperature > 20 AND location = 'Living Room')",
+        ):
+            print_error("Failed to search with combined filters")
+            sys.exit(1)
+
+        print_section("Example 7 completed successfully!")
+        print_success("Fleet management example completed")
+        print_info(
+            "Multiple sensors were created and various search queries were demonstrated"
+        )
+        print_info("This shows how to manage large fleets of IoT devices")
 
     except KeyboardInterrupt:
         print_error("Example interrupted by user")

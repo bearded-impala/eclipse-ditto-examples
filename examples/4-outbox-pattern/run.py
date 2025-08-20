@@ -29,7 +29,6 @@ from utils.ditto_operations import (
     print_info,
     print_section,
     print_success,
-    run_operations,
     update_thing_property,
 )
 
@@ -61,39 +60,41 @@ def main():
         # Get current directory for file operations
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # Define the operations to run
-        operations = [
-            ("Creating Policy", create_policy, policy_id, "policy.json", current_dir),
-            ("Creating Thing", create_thing, doorlock_id, "thing.json", current_dir),
-            (
-                "Application issues command (sets desired state - Outbox)",
-                update_thing_property,
-                doorlock_id,
-                "features/lockState/properties/status/desired",
-                "LOCKED",
-            ),
-            (
-                "Simulate Device Action and Report (Completing the Outbox cycle)",
-                update_thing_property,
-                doorlock_id,
-                "features/lockState/properties/status/value",
-                "LOCKED",
-            ),
-            ("Retrieving Digital Twin State", get_thing, doorlock_id),
-        ]
-
-        # Run all operations
-        success = run_operations(operations)
-
-        if success:
-            print_section("Example 4 completed successfully!")
-            print_success("Outbox pattern example completed")
-            print_info("The doorlock command was issued and confirmed successfully")
-            print_info(
-                "This demonstrates reliable command delivery using desired vs reported states"
-            )
-        else:
+        # Step 1: Create Policy
+        if not create_policy(policy_id, "policy.json", current_dir):
+            print_error("Failed to create policy")
             sys.exit(1)
+
+        # Step 2: Create Thing
+        if not create_thing(doorlock_id, "thing.json", current_dir):
+            print_error("Failed to create thing")
+            sys.exit(1)
+
+        # Step 3: Application issues command (sets desired state - Outbox)
+        if not update_thing_property(
+            doorlock_id, "features/lockState/properties/status/desired", "LOCKED"
+        ):
+            print_error("Failed to set desired state")
+            sys.exit(1)
+
+        # Step 4: Simulate Device Action and Report (Completing the Outbox cycle)
+        if not update_thing_property(
+            doorlock_id, "features/lockState/properties/status/value", "LOCKED"
+        ):
+            print_error("Failed to update reported state")
+            sys.exit(1)
+
+        # Step 5: Retrieve Digital Twin State
+        if not get_thing(doorlock_id):
+            print_error("Failed to retrieve thing")
+            sys.exit(1)
+
+        print_section("Example 4 completed successfully!")
+        print_success("Outbox pattern example completed")
+        print_info("The doorlock command was issued and confirmed successfully")
+        print_info(
+            "This demonstrates reliable command delivery using desired vs reported states"
+        )
 
     except KeyboardInterrupt:
         print_error("Example interrupted by user")
