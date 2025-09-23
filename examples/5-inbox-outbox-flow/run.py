@@ -21,6 +21,7 @@ Simulate an application polling a Smart Kettle's digital twin to:
 This shows the complete inbox-outbox flow pattern.
 """
 
+import asyncio
 import os
 import sys
 import time
@@ -39,7 +40,7 @@ from utils.ditto_operations import (
 )
 
 
-def main():
+async def main():
     """Main entry point for Inbox Outbox Flow example."""
     try:
         # Get configuration from environment variables
@@ -65,36 +66,36 @@ def main():
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
         # Step 1: Create Policy
-        if not create_policy(policy_id, "policy.json", current_dir):
+        if not await create_policy(policy_id, "policy.json", current_dir):
             print_error("Failed to create policy")
             sys.exit(1)
 
         # Step 2: Create Thing
-        if not create_thing(kettle_id, "thing.json", current_dir):
+        if not await create_thing(kettle_id, "thing.json", current_dir):
             print_error("Failed to create thing")
             sys.exit(1)
 
         # Step 3: Create Connection
-        if not create_connection("connection.json", current_dir):
+        if not await create_connection("connection.json", current_dir):
             print_error("Failed to create connection")
             sys.exit(1)
 
         # Step 4: App sets desired temperature (Outbox action)
-        if not update_thing_property(
+        if not await update_thing_property(
             kettle_id, "features/temperature/properties/desired", 95
         ):
             print_error("Failed to set desired temperature")
             sys.exit(1)
 
         # Step 5: Device reports temperature (Telemetry/Inbox action)
-        if not update_thing_property(
+        if not await update_thing_property(
             kettle_id, "features/temperature/properties/value", 92.5
         ):
             print_error("Failed to update reported temperature")
             sys.exit(1)
 
         # Step 6: Device sends activity event (Event/Inbox action)
-        if not update_thing_property(
+        if not await update_thing_property(
             kettle_id, "features/activityLog/properties/lastEvent", "Boiling started"
         ):
             print_error("Failed to update activity log")
@@ -106,12 +107,12 @@ def main():
 
         for i in range(1, 6):
             print_info(f"--- Poll #{i} ---")
-            if not get_thing(kettle_id):
+            if not await get_thing(kettle_id):
                 print_error(f"Failed to retrieve thing state on poll #{i}")
                 sys.exit(1)
             if i < 5:  # Don't sleep after the last poll
                 print_info("Waiting 2 seconds before next poll...")
-                time.sleep(2)
+                await asyncio.sleep(2)
 
         print_section("Example 5 completed successfully!")
         print_success("Inbox-outbox flow example completed")
@@ -133,4 +134,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

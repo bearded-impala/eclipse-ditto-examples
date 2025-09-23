@@ -17,6 +17,7 @@ Example 1: Device State Sync
 This shows the basic pattern of device state synchronization in Eclipse Ditto.
 """
 
+import asyncio
 import os
 import sys
 
@@ -33,7 +34,7 @@ from utils.ditto_operations import (
 )
 
 
-def main():
+async def main():
     """Main entry point for Device State Sync example."""
     try:
         # Get configuration from environment variables
@@ -56,24 +57,24 @@ def main():
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
         # Step 1: Create Policy
-        if not create_policy(policy_id, "policy.json", current_dir):
+        if not await create_policy(policy_id, "policy.json", current_dir):
             print_error("Failed to create policy")
             sys.exit(1)
 
         # Step 2: Create Thing
-        if not create_thing(sensor_id, "thing.json", current_dir):
+        if not await create_thing(sensor_id, "thing.json", current_dir):
             print_error("Failed to create thing")
             sys.exit(1)
 
         # Step 3: Update Reported State (temperature)
-        if not update_thing_property(
+        if not await update_thing_property(
             sensor_id, "features/temperature/properties/value", 22.8
         ):
             print_error("Failed to update temperature")
             sys.exit(1)
 
         # Step 4: Retrieve Digital Twin State
-        if not get_thing(sensor_id):
+        if not await get_thing(sensor_id):
             print_error("Failed to retrieve thing")
             sys.exit(1)
 
@@ -92,4 +93,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

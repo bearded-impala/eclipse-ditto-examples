@@ -17,6 +17,7 @@ Manage a fleet of sensor devices.
 This shows fleet management capabilities in Eclipse Ditto.
 """
 
+import asyncio
 import glob
 import json
 import os
@@ -101,7 +102,7 @@ def bulk_create_things(current_dir: str = None) -> bool:
         return False
 
 
-def search_things_with_filter(
+async def search_things_with_filter(
     filter_expr: str = None, description: str = "all things"
 ) -> bool:
     """
@@ -113,7 +114,7 @@ def search_things_with_filter(
     """
     try:
         print_section(f"Search: {description}")
-        results = search_things(filter_expr)
+        results = await search_things(filter_expr)
 
         if results and results.get("items"):
             print_info(f"Found {len(results['items'])} things")
@@ -127,7 +128,7 @@ def search_things_with_filter(
         return False
 
 
-def main():
+async def main():
     """Main entry point for Fleet Management example."""
     try:
         # Get configuration from environment variables
@@ -155,7 +156,7 @@ def main():
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
         # Step 1: Create Policy
-        if not create_policy(policy_id, "policy.json", current_dir):
+        if not await create_policy(policy_id, "policy.json", current_dir):
             print_error("Failed to create policy")
             sys.exit(1)
 
@@ -165,7 +166,7 @@ def main():
             sys.exit(1)
 
         # Step 3: Update sensor-002 reported state
-        if not update_thing_property(
+        if not await update_thing_property(
             sensor002_id, "features/humidity/properties/value", 70.1
         ):
             print_error("Failed to update sensor-002 humidity")
@@ -176,12 +177,12 @@ def main():
         print_info("Demonstrating various search capabilities")
 
         # Search 1: Find all things
-        if not search_things_with_filter(description="Find all things"):
+        if not await search_things_with_filter(description="Find all things"):
             print_error("Failed to search all things")
             sys.exit(1)
 
         # Search 2: Find all things with manufacturer: 'ABC'
-        if not search_things_with_filter(
+        if not await search_things_with_filter(
             filter_expr="eq(attributes/manufacturer,'ABC')",
             description="Find all things with manufacturer: 'ABC'",
         ):
@@ -189,7 +190,7 @@ def main():
             sys.exit(1)
 
         # Search 3: Find all things where temperature > 20 Celsius
-        if not search_things_with_filter(
+        if not await search_things_with_filter(
             filter_expr="gt(features/temperature/properties/value,20)",
             description="Find all things where temperature > 20 Celsius",
         ):
@@ -197,7 +198,7 @@ def main():
             sys.exit(1)
 
         # Search 4: Find all things in the 'Living Room'
-        if not search_things_with_filter(
+        if not await search_things_with_filter(
             filter_expr="eq(attributes/location,'Living Room')",
             description="Find all things in the 'Living Room'",
         ):
@@ -205,7 +206,7 @@ def main():
             sys.exit(1)
 
         # Search 5: Combine queries (temperature > 20 AND location = 'Living Room')
-        if not search_things_with_filter(
+        if not await search_things_with_filter(
             filter_expr="and(gt(features/temperature/properties/value,20),eq(attributes/location,'Living Room'))",
             description="Combine queries (temperature > 20 AND location = 'Living Room')",
         ):
@@ -230,4 +231,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

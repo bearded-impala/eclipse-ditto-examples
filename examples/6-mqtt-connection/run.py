@@ -16,6 +16,7 @@ Connect a device to Ditto via MQTT.
 This shows how to connect devices to Ditto via MQTT.
 """
 
+import asyncio
 import os
 import subprocess
 import sys
@@ -123,7 +124,7 @@ def create_connection_from_file(filename: str, connection_type: str) -> bool:
         return False
 
 
-def main():
+async def main():
     """Main entry point for MQTT Connection example."""
     try:
         # Get configuration from environment variables
@@ -155,7 +156,7 @@ def main():
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
         # Step 2: Create Ditto policy
-        if not create_policy(policy_id, "policy.json", current_dir):
+        if not await create_policy(policy_id, "policy.json", current_dir):
             print_error("Failed to create policy")
             sys.exit(1)
 
@@ -207,4 +208,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -17,6 +17,7 @@ Remotely lock/unlock a smart door. We want to ensure the command is eventually d
 This shows the outbox pattern for reliable command delivery.
 """
 
+import asyncio
 import os
 import sys
 
@@ -33,7 +34,7 @@ from utils.ditto_operations import (
 )
 
 
-def main():
+async def main():
     """Main entry point for Outbox Pattern example."""
     try:
         # Get configuration from environment variables
@@ -61,31 +62,31 @@ def main():
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
         # Step 1: Create Policy
-        if not create_policy(policy_id, "policy.json", current_dir):
+        if not await create_policy(policy_id, "policy.json", current_dir):
             print_error("Failed to create policy")
             sys.exit(1)
 
         # Step 2: Create Thing
-        if not create_thing(doorlock_id, "thing.json", current_dir):
+        if not await create_thing(doorlock_id, "thing.json", current_dir):
             print_error("Failed to create thing")
             sys.exit(1)
 
         # Step 3: Application issues command (sets desired state - Outbox)
-        if not update_thing_property(
+        if not await update_thing_property(
             doorlock_id, "features/lockState/properties/status/desired", "LOCKED"
         ):
             print_error("Failed to set desired state")
             sys.exit(1)
 
         # Step 4: Simulate Device Action and Report (Completing the Outbox cycle)
-        if not update_thing_property(
+        if not await update_thing_property(
             doorlock_id, "features/lockState/properties/status/value", "LOCKED"
         ):
             print_error("Failed to update reported state")
             sys.exit(1)
 
         # Step 5: Retrieve Digital Twin State
-        if not get_thing(doorlock_id):
+        if not await get_thing(doorlock_id):
             print_error("Failed to retrieve thing")
             sys.exit(1)
 
@@ -107,4 +108,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -6,67 +6,110 @@ This module provides simple functions for interacting with Eclipse Ditto
 without the complexity of classes. Designed for educational purposes.
 """
 
+import asyncio
 import json
 import os
-import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import httpx
+import rich
 from dotenv import load_dotenv
+from kiota_http.httpx_request_adapter import HttpxRequestAdapter
 
-# Load environment variables at module level
+from ditto_client.basic_auth import BasicAuthProvider
+from ditto_client.generated.ditto_client import DittoClient
+from ditto_client.generated.models.new_policy import NewPolicy
+from ditto_client.generated.models.new_thing import NewThing
+from ditto_client.generated.models.policy_entries import PolicyEntries
+
 load_dotenv()
 
 # Configuration
-DITTO_URL = os.getenv("DITTO_API_BASE", "http://localhost:8080/api/2").rstrip("/")
+DITTO_BASE_URL = os.getenv("DITTO_BASE_URL", "http://localhost:8080")
+DITTO_URL = DITTO_BASE_URL  # Alias for backward compatibility
 AUTH_USER = os.getenv("DITTO_USERNAME", "ditto")
 AUTH_PASS = os.getenv("DITTO_PASSWORD", "ditto")
 
-# HTTP client session
-_session = None
+
+def create_ditto_client(username: Optional[str] = None, password: Optional[str] = None) -> DittoClient:
+    """Create a new Ditto client instance.
+
+    Args:
+        username: Optional username (defaults to AUTH_USER)
+        password: Optional password (defaults to AUTH_PASS)
+
+    Returns:
+        New DittoClient instance
+    """
+    user = username or AUTH_USER
+    pwd = password or AUTH_PASS
+
+    auth_provider = BasicAuthProvider(user_name=user, password=pwd)
+    request_adapter = HttpxRequestAdapter(auth_provider)
+    request_adapter.base_url = DITTO_BASE_URL
+    return DittoClient(request_adapter)
 
 
-def get_session():
-    """Get or create HTTP session."""
-    global _session
-    if _session is None:
-        _session = httpx.Client(timeout=30.0)
-    return _session
+def create_policy_from_json(policy_data: Dict[str, Any]) -> NewPolicy:
+    """Create a NewPolicy object from JSON data."""
+    # Create policy entries
+    entries = PolicyEntries()
+    entries.additional_data = policy_data.get("entries", {})
+
+    # Create the policy
+    policy = NewPolicy()
+    policy.entries = entries
+
+    return policy
 
 
-def close_session():
-    """Close HTTP session."""
-    global _session
-    if _session:
-        _session.close()
-        _session = None
+def create_thing_from_json(thing_data: Dict[str, Any]) -> NewThing:
+    """Create a NewThing object from JSON data."""
+    thing = NewThing()
+    thing.policy_id = thing_data.get("policyId")
+
+    # Handle attributes
+    if "attributes" in thing_data:
+        from ditto_client.generated.models.attributes import Attributes
+
+        attributes = Attributes()
+        attributes.additional_data = thing_data["attributes"]
+        thing.attributes = attributes
+
+    # Handle features
+    if "features" in thing_data:
+        from ditto_client.generated.models.features import Features
+
+        features = Features()
+        features.additional_data = thing_data["features"]
+        thing.features = features
+
+    return thing
 
 
-def print_section(title: str):
+def print_section(title: str) -> None:
     """Print a formatted section header."""
-    print()
-    print("=" * 60)
-    print(f"🔧 {title}")
-    print("=" * 60)
+    rich.print("=" * 60)
+    rich.print(f"-- {title} --")
+    rich.print("=" * 60)
 
 
-def print_success(message: str):
+def print_success(message: str) -> None:
     """Print a success message."""
-    print(f"✅ {message}")
+    rich.print(f"[SUCCESS] {message}")
 
 
-def print_error(message: str):
+def print_error(message: str) -> None:
     """Print an error message."""
-    print(f"❌ {message}")
+    rich.print(f"[ERROR] {message}")
 
 
-def print_info(message: str):
+def print_info(message: str) -> None:
     """Print an info message."""
-    print(f"ℹ️  {message}")
+    rich.print(f"[INFO] {message}")
 
 
-def load_json_file(filename: str, example_dir: str = None) -> Dict[str, Any]:
+def load_json_file(filename: str, example_dir: Optional[str] = None) -> Dict[str, Any]:
     """
     Load a JSON file from the current example directory.
 
@@ -88,12 +131,12 @@ def load_json_file(filename: str, example_dir: str = None) -> Dict[str, Any]:
             # Get the directory of the calling script
             import inspect
 
-            caller_frame = inspect.currentframe().f_back
-            if caller_frame is None:
+            caller_frame = inspect.currentframe()
+            if caller_frame is None or caller_frame.f_back is None:
                 # Fallback to current working directory
                 file_path = Path.cwd() / filename
             else:
-                caller_file = caller_frame.f_globals.get("__file__")
+                caller_file = caller_frame.f_back.f_globals.get("__file__")
                 if caller_file:
                     file_path = Path(caller_file).parent / filename
                 else:
@@ -104,7 +147,8 @@ def load_json_file(filename: str, example_dir: str = None) -> Dict[str, Any]:
             raise FileNotFoundError(f"File not found: {file_path}")
 
         with open(file_path, "r") as f:
-            return json.load(f)
+            data: Dict[str, Any] = json.load(f)
+            return data
 
     except FileNotFoundError as e:
         print_error(f"File not found: {e}")
@@ -117,9 +161,7 @@ def load_json_file(filename: str, example_dir: str = None) -> Dict[str, Any]:
         raise
 
 
-def create_policy(
-    policy_id: str, policy_file: str = "policy.json", example_dir: str = None
-) -> bool:
+async def create_policy(policy_id: str, policy_file: str = "policy.json", example_dir: Optional[str] = None) -> bool:
     """
     Create a policy from a JSON file.
 
@@ -132,42 +174,27 @@ def create_policy(
         True if successful, False otherwise
     """
     try:
-        print_section(f"Creating Policy: {policy_id}")
-
         policy_data = load_json_file(policy_file, example_dir)
-        url = f"{DITTO_URL}/policies/{policy_id}"
-        headers = {"Content-Type": "application/json"}
+        policy_obj = create_policy_from_json(policy_data)
 
-        session = get_session()
-        response = session.put(
-            url, json=policy_data, auth=(AUTH_USER, AUTH_PASS), headers=headers
-        )
+        ditto_client = create_ditto_client()
 
-        if 200 <= response.status_code < 300:
-            print_success(f"Policy created: {policy_id}")
-            return True
-        else:
-            print_error(
-                f"Failed to create policy {policy_id}. Status: {response.status_code}"
-            )
-            print_info(f"Response: {response.text}")
-            return False
+        # Use the Ditto client to create policy
+        await ditto_client.api.two.policies.by_policy_id(policy_id).put(policy_obj)
+
+        print_success(f"Policy created: {policy_id}")
+        return True
 
     except FileNotFoundError:
         return False
     except json.JSONDecodeError:
         return False
-    except httpx.RequestError as e:
-        print_error(f"Network error creating policy {policy_id}: {e}")
-        return False
     except Exception as e:
-        print_error(f"Unexpected error creating policy {policy_id}: {e}")
+        print_error(f"Error creating policy {policy_id}: {e}")
         return False
 
 
-def create_thing(
-    thing_id: str, thing_file: str = "thing.json", example_dir: str = None
-) -> bool:
+async def create_thing(thing_id: str, thing_file: str = "thing.json", example_dir: Optional[str] = None) -> bool:
     """
     Create a thing from a JSON file.
 
@@ -180,81 +207,74 @@ def create_thing(
         True if successful, False otherwise
     """
     try:
-        print_section(f"Creating Thing: {thing_id}")
-
         thing_data = load_json_file(thing_file, example_dir)
-        url = f"{DITTO_URL}/things/{thing_id}"
-        headers = {"Content-Type": "application/json"}
+        thing_obj = create_thing_from_json(thing_data)
 
-        session = get_session()
-        response = session.put(
-            url, json=thing_data, auth=(AUTH_USER, AUTH_PASS), headers=headers
-        )
+        ditto_client = create_ditto_client()
 
-        if 200 <= response.status_code < 300:
-            print_success(f"Thing created: {thing_id}")
-            return True
-        else:
-            print_error(
-                f"Failed to create thing {thing_id}. Status: {response.status_code}"
-            )
-            print_info(f"Response: {response.text}")
-            return False
+        # Use the Ditto client to create thing
+        await ditto_client.api.two.things.by_thing_id(thing_id).put(thing_obj)
+
+        print_success(f"Thing created: {thing_id}")
+        return True
 
     except FileNotFoundError:
         return False
     except json.JSONDecodeError:
         return False
-    except httpx.RequestError as e:
-        print_error(f"Network error creating thing {thing_id}: {e}")
-        return False
     except Exception as e:
-        print_error(f"Unexpected error creating thing {thing_id}: {e}")
+        print_error(f"Error creating thing {thing_id}: {e}")
         return False
 
 
-def update_thing_property(thing_id: str, path: str, value: Any) -> bool:
+async def update_thing_property(thing_id: str, path: str, value: Any) -> bool:
     """
-    Update a thing property.
+    Update a thing property using JSON merge patch.
 
     Args:
         thing_id: The thing ID
-        path: Property path (e.g., "features/temperature/properties/value")
+        path: Property path (e.g., "attributes/manufacturer" or "features/temperature/properties/value")
         value: The value to set
 
     Returns:
         True if successful, False otherwise
     """
     try:
-        print_section(f"Updating Property: {thing_id}/{path}")
+        ditto_client = create_ditto_client()
 
-        url = f"{DITTO_URL}/things/{thing_id}/{path}"
-        headers = {"Content-Type": "application/json"}
+        # Create a patch object with the path and value
+        from ditto_client.generated.models.patch_thing import PatchThing
 
-        session = get_session()
-        response = session.put(
-            url, json=value, auth=(AUTH_USER, AUTH_PASS), headers=headers
-        )
+        patch_data = PatchThing()
 
-        if 200 <= response.status_code < 300:
-            print_success(f"Updated {thing_id}/{path} = {value}")
-            return True
-        else:
-            print_error(
-                f"Failed to update {thing_id}/{path}. Status: {response.status_code}"
-            )
-            print_info(f"Response: {response.text}")
-            return False
+        # Build the nested structure based on the path
+        path_parts = path.split("/")
+        current_dict: Dict[str, Any] = {}
+        target_dict = current_dict
 
-    except httpx.RequestError as e:
-        print_error(f"Network error updating {thing_id}/{path}: {e}")
-        return False
+        # Navigate to the target location
+        for part in path_parts[:-1]:
+            target_dict[part] = {}
+            target_dict = target_dict[part]
+
+        # Set the final value
+        target_dict[path_parts[-1]] = value
+
+        # Set the patch data
+        patch_data.additional_data = current_dict
+
+        # Use the Ditto client to update property
+        await ditto_client.api.two.things.by_thing_id(thing_id).patch(patch_data)
+
+        print_success(f"Updated {thing_id}/{path} = {value}")
+        return True
+
     except Exception as e:
-        print_error(f"Unexpected error updating {thing_id}/{path}: {e}")
+        print_error(f"Error updating {thing_id}/{path}: {e}")
         return False
 
 
-def get_thing(thing_id: str) -> Optional[Dict[str, Any]]:
+async def get_thing(thing_id: str) -> Optional[Dict[str, Any]]:
     """
     Get a thing by ID.
 
@@ -265,44 +285,35 @@ def get_thing(thing_id: str) -> Optional[Dict[str, Any]]:
         Thing data or None if not found
     """
     try:
-        print_section(f"Retrieving Thing: {thing_id}")
+        ditto_client = create_ditto_client()
 
-        url = f"{DITTO_URL}/things/{thing_id}"
+        # Use the Ditto client to get thing
+        thing_data = await ditto_client.api.two.things.by_thing_id(thing_id).get()
 
-        session = get_session()
-        response = session.get(url, auth=(AUTH_USER, AUTH_PASS))
+        print_success(f"Retrieved thing: {thing_id}")
 
-        if response.status_code == 200:
-            thing_data = response.json()
-            print_success(f"Retrieved thing: {thing_id}")
-            print(json.dumps(thing_data, indent=2))
-            return thing_data
-        elif response.status_code == 404:
-            print_error(f"Thing not found: {thing_id}")
-            return None
-        else:
-            print_error(
-                f"Failed to retrieve thing {thing_id}. Status: {response.status_code}"
-            )
-            print_info(f"Response: {response.text}")
-            return None
+        # Convert Thing object to dict for display
+        try:
+            if hasattr(thing_data, "__dict__"):
+                thing_dict: Dict[str, Any] = thing_data.__dict__
+            else:
+                thing_dict = {"thing_id": thing_id, "data": str(thing_data)}
 
-    except httpx.RequestError as e:
-        print_error(f"Network error retrieving thing {thing_id}: {e}")
-        return None
-    except json.JSONDecodeError as e:
-        print_error(f"Invalid JSON response for thing {thing_id}: {e}")
-        return None
+            rich.print(json.dumps(thing_dict, indent=2, default=str))
+            return thing_dict
+        except Exception as json_error:
+            print_info(f"Could not serialize thing data: {json_error}")
+            rich.print(f"Thing data: {thing_data}")
+            return {"thing_id": thing_id, "data": str(thing_data)}
+
     except Exception as e:
-        print_error(f"Unexpected error retrieving thing {thing_id}: {e}")
+        print_error(f"Error retrieving thing {thing_id}: {e}")
         return None
 
 
-def create_connection(
-    connection_file: str = "connection.json", example_dir: str = None
-) -> bool:
+async def create_connection(connection_file: str = "connection.json", example_dir: Optional[str] = None) -> bool:
     """
-    Create a connection from a JSON file.
+    Create a connection from a JSON file using regular API.
 
     Args:
         connection_file: Name of the connection JSON file
@@ -312,45 +323,93 @@ def create_connection(
         True if successful, False otherwise
     """
     try:
-        print_section("Creating Connection")
-
         connection_data = load_json_file(connection_file, example_dir)
-        connection_timeout = os.getenv("CONNECTION_TIMEOUT", "60")
 
-        # Use devops API for connections
-        url = f"{os.getenv('DITTO_DEVOPS_API', 'http://localhost:8080/devops')}/piggyback/connectivity?timeout={connection_timeout}"
-        headers = {"Content-Type": "application/json"}
-        auth = (
-            os.getenv("DITTO_DEVOPS_USERNAME", "devops"),
-            os.getenv("DITTO_DEVOPS_PASSWORD", "foobar"),
-        )
+        # Use devops credentials for regular API connections
+        devops_auth_provider = BasicAuthProvider(user_name="devops", password="foobar")
+        devops_request_adapter = HttpxRequestAdapter(devops_auth_provider)
+        devops_request_adapter.base_url = DITTO_BASE_URL
+        ditto_client = DittoClient(devops_request_adapter)
 
-        session = get_session()
-        response = session.post(url, json=connection_data, auth=auth, headers=headers)
-
-        if 200 <= response.status_code < 300:
-            print_success("Connection created successfully")
-            return True
+        # Extract the actual connection data from the piggyback format
+        if "piggybackCommand" in connection_data and "connection" in connection_data["piggybackCommand"]:
+            connection_config = connection_data["piggybackCommand"]["connection"]
         else:
-            print_error(f"Failed to create connection. Status: {response.status_code}")
-            print_info(f"Response: {response.text}")
-            return False
+            # If it's already in the right format, use it directly
+            connection_config = connection_data.copy()
+
+        # Remove the ID since the regular API generates it automatically
+        if "id" in connection_config:
+            del connection_config["id"]
+
+        # Create the proper model object for regular API
+        from ditto_client.generated.models.new_connection import NewConnection
+
+        connection_obj = NewConnection()
+
+        # For now, put everything in additional_data to avoid serialization issues
+        connection_obj.additional_data = connection_config
+
+        # Use the regular API to create connection (POST generates ID automatically)
+        await ditto_client.api.two.connections.post(connection_obj)
+
+        print_success("Connection created successfully via regular API")
+        return True
 
     except FileNotFoundError:
         return False
     except json.JSONDecodeError:
         return False
-    except httpx.RequestError as e:
-        print_error(f"Network error creating connection: {e}")
+    except Exception as e:
+        print_error(f"Error creating connection: {e}")
+        return False
+
+
+async def create_connection_piggyback(
+    connection_file: str = "connection.json", example_dir: Optional[str] = None
+) -> bool:
+    """
+    Create a connection from a JSON file using DevOps API piggyback.
+
+    Args:
+        connection_file: Name of the connection JSON file
+        example_dir: Optional directory path
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        connection_data = load_json_file(connection_file, example_dir)
+
+        # Create a separate DevOps client with devops:foobar credentials
+        devops_auth_provider = BasicAuthProvider(user_name="devops", password="foobar")
+        devops_request_adapter = HttpxRequestAdapter(devops_auth_provider)
+        devops_request_adapter.base_url = DITTO_BASE_URL
+        devops_ditto_client = DittoClient(devops_request_adapter)
+
+        # Create the proper model object for DevOps API
+        from ditto_client.generated.models.base_piggyback_command_request_schema import BasePiggybackCommandRequestSchema
+
+        piggyback_command = BasePiggybackCommandRequestSchema()
+        piggyback_command.additional_data = connection_data
+
+        # Use the DevOps API to create connection
+        # We need to send it to the connectivity service via piggyback
+        await devops_ditto_client.devops.piggyback.by_service_name("connectivity").post(piggyback_command)
+
+        print_success("Connection created successfully via piggyback")
+        return True
+
+    except FileNotFoundError:
+        return False
+    except json.JSONDecodeError:
         return False
     except Exception as e:
-        print_error(f"Unexpected error creating connection: {e}")
+        print_error(f"Error creating connection via piggyback: {e}")
         return False
 
 
-def search_things(
-    filter_expr: Optional[str] = None, page_size: int = 200
-) -> Dict[str, Any]:
+async def search_things(filter_expr: Optional[str] = None, page_size: int = 200) -> Dict[str, Any]:
     """
     Search things with optional filter.
 
@@ -362,35 +421,62 @@ def search_things(
         Search results
     """
     try:
-        search_url = f"{DITTO_URL}/search/things"
-        params = {"option": f"size({page_size})"}
+        ditto_client = create_ditto_client()
 
-        if filter_expr:
-            params["filter"] = filter_expr
+        # Use the Ditto client to search things
+        response = await ditto_client.api.two.things.get()
 
-        session = get_session()
-        response = session.get(search_url, auth=(AUTH_USER, AUTH_PASS), params=params)
+        # Handle PyPI client response format - returns simple list
+        items: list[Any] = []
+        if response is not None:
+            if isinstance(response, list):
+                # PyPI version returns a simple list
+                items = response
+            elif hasattr(response, "items") and response.items is not None:
+                # Fallback for other response formats
+                items = list(response.items)
+            else:
+                # If no items attribute, treat the response as a single item
+                items = [response]
 
-        if response.status_code == 200:
-            results = response.json()
-            print_success(f"Found {len(results.get('items', []))} things")
-            return results
-        else:
-            print_error(f"Failed to search things. Status: {response.status_code}")
-            print_info(f"Response: {response.text}")
-            return {"items": [], "cursor": None}
+        results = {"items": items, "cursor": None}
+        print_success(f"Found {len(items)} things")
+        return results
 
-    except httpx.RequestError as e:
-        print_error(f"Network error searching things: {e}")
-        return {"items": [], "cursor": None}
-    except json.JSONDecodeError as e:
-        print_error(f"Invalid JSON response from search: {e}")
-        return {"items": [], "cursor": None}
     except Exception as e:
-        print_error(f"Unexpected error searching things: {e}")
+        print_error(f"Error searching things: {e}")
         return {"items": [], "cursor": None}
 
 
-def cleanup():
-    """Clean up resources."""
-    close_session()
+def cleanup() -> bool:
+    """
+    Simple cleanup function that can be imported by examples.
+    
+    This function provides a lightweight cleanup that doesn't require asyncio.
+    For more comprehensive cleanup, use the cleanup.py script.
+    
+    Returns:
+        True if cleanup appears successful, False otherwise
+    """
+    try:
+        import subprocess
+        import sys
+        
+        # Run the cleanup script using uv
+        result = subprocess.run(
+            [sys.executable, "-m", "cleanup"],
+            cwd=Path(__file__).parent.parent,
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode == 0:
+            print_success("Cleanup completed successfully")
+            return True
+        else:
+            print_error(f"Cleanup failed: {result.stderr}")
+            return False
+            
+    except Exception as e:
+        print_error(f"Error during cleanup: {e}")
+        return False

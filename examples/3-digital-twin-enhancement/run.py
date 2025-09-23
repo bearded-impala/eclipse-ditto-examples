@@ -16,6 +16,7 @@ Enrich a digital twin with external data (e.g., weather information based on loc
 This shows how to enhance digital twins with external data sources.
 """
 
+import asyncio
 import os
 import sys
 
@@ -32,7 +33,7 @@ from utils.ditto_operations import (
 )
 
 
-def main():
+async def main():
     """Main entry point for Digital Twin Enhancement example."""
     try:
         # Get configuration from environment variables
@@ -70,24 +71,24 @@ def main():
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
         # Step 1: Create Policy
-        if not create_policy(policy_id, "policy.json", current_dir):
+        if not await create_policy(policy_id, "policy.json", current_dir):
             print_error("Failed to create policy")
             sys.exit(1)
 
         # Step 2: Create Thing
-        if not create_thing(vehicle_id, "thing.json", current_dir):
+        if not await create_thing(vehicle_id, "thing.json", current_dir):
             print_error("Failed to create thing")
             sys.exit(1)
 
         # Step 3: Simulate External Service (Update Weather Data)
-        if not update_thing_property(
+        if not await update_thing_property(
             vehicle_id, "features/weather/properties", weather_data
         ):
             print_error("Failed to update weather data")
             sys.exit(1)
 
         # Step 4: Retrieve Digital Twin State
-        if not get_thing(vehicle_id):
+        if not await get_thing(vehicle_id):
             print_error("Failed to retrieve thing")
             sys.exit(1)
 
@@ -109,4 +110,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
