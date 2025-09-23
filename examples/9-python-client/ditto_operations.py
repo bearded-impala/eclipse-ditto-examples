@@ -447,23 +447,6 @@ async def search_things(filter_expr: Optional[str] = None, page_size: int = 200)
         return {"items": [], "cursor": None}
 
 
-async def run_operations(operations: list[tuple[Any, ...]]) -> bool:
-    """
-    Run a list of operations with automatic error handling.
-
-    Args:
-        operations: List of tuples (description, operation_function, *args)
-
-    Returns:
-        True if all operations succeeded, False otherwise
-    """
-    for description, operation_func, *args in operations:
-        if not await operation_func(*args):
-            print_error(f"Operation failed: {description}")
-            return False
-    return True
-
-
 async def example_usage() -> None:
     """Comprehensive test of all ditto operations."""
     try:
