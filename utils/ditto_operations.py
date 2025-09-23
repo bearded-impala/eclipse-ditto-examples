@@ -6,7 +6,6 @@ This module provides simple functions for interacting with Eclipse Ditto
 without the complexity of classes. Designed for educational purposes.
 """
 
-import asyncio
 import json
 import os
 from pathlib import Path
@@ -21,12 +20,17 @@ from ditto_client.generated.ditto_client import DittoClient
 from ditto_client.generated.models.new_policy import NewPolicy
 from ditto_client.generated.models.new_thing import NewThing
 from ditto_client.generated.models.policy_entries import PolicyEntries
+from ditto_client.generated.models.attributes import Attributes
+from ditto_client.generated.models.features import Features
+from ditto_client.generated.models.patch_thing import PatchThing
+from ditto_client.generated.models.new_connection import NewConnection
+from ditto_client.generated.models.base_piggyback_command_request_schema import BasePiggybackCommandRequestSchema
 
 load_dotenv()
 
 # Configuration
 DITTO_BASE_URL = os.getenv("DITTO_BASE_URL", "http://localhost:8080")
-DITTO_URL = DITTO_BASE_URL  # Alias for backward compatibility
+
 AUTH_USER = os.getenv("DITTO_USERNAME", "ditto")
 AUTH_PASS = os.getenv("DITTO_PASSWORD", "ditto")
 
@@ -50,7 +54,7 @@ def create_ditto_client(username: Optional[str] = None, password: Optional[str] 
     return DittoClient(request_adapter)
 
 
-def create_policy_from_json(policy_data: Dict[str, Any]) -> NewPolicy:
+def model_policy_from_json(policy_data: Dict[str, Any]) -> NewPolicy:
     """Create a NewPolicy object from JSON data."""
     # Create policy entries
     entries = PolicyEntries()
@@ -63,36 +67,30 @@ def create_policy_from_json(policy_data: Dict[str, Any]) -> NewPolicy:
     return policy
 
 
-def create_thing_from_json(thing_data: Dict[str, Any]) -> NewThing:
+def model_thing_from_json(thing_data: Dict[str, Any]) -> NewThing:
     """Create a NewThing object from JSON data."""
     thing = NewThing()
     thing.policy_id = thing_data.get("policyId")
 
     # Handle attributes
     if "attributes" in thing_data:
-        from ditto_client.generated.models.attributes import Attributes
-
         attributes = Attributes()
         attributes.additional_data = thing_data["attributes"]
         thing.attributes = attributes
 
     # Handle features
     if "features" in thing_data:
-        from ditto_client.generated.models.features import Features
-
         features = Features()
         features.additional_data = thing_data["features"]
         thing.features = features
 
     return thing
 
-
 def print_section(title: str) -> None:
     """Print a formatted section header."""
     rich.print("=" * 60)
     rich.print(f"-- {title} --")
     rich.print("=" * 60)
-
 
 def print_success(message: str) -> None:
     """Print a success message."""
@@ -109,13 +107,13 @@ def print_info(message: str) -> None:
     rich.print(f"[INFO] {message}")
 
 
-def load_json_file(filename: str, example_dir: Optional[str] = None) -> Dict[str, Any]:
+def load_json_file(filename: str, directory: Optional[str] = None) -> Dict[str, Any]:
     """
-    Load a JSON file from the current example directory.
+    Load a JSON file from the specified directory.
 
     Args:
         filename: Name of the JSON file
-        example_dir: Optional directory path (defaults to current script directory)
+        directory: Directory path (defaults to current working directory)
 
     Returns:
         Parsed JSON data
@@ -125,23 +123,10 @@ def load_json_file(filename: str, example_dir: Optional[str] = None) -> Dict[str
         json.JSONDecodeError: If the file contains invalid JSON
     """
     try:
-        if example_dir:
-            file_path = Path(example_dir) / filename
+        if directory:
+            file_path = Path(directory) / filename
         else:
-            # Get the directory of the calling script
-            import inspect
-
-            caller_frame = inspect.currentframe()
-            if caller_frame is None or caller_frame.f_back is None:
-                # Fallback to current working directory
-                file_path = Path.cwd() / filename
-            else:
-                caller_file = caller_frame.f_back.f_globals.get("__file__")
-                if caller_file:
-                    file_path = Path(caller_file).parent / filename
-                else:
-                    # Fallback to current working directory
-                    file_path = Path.cwd() / filename
+            file_path = Path(filename)  # Assume filename includes path or is in cwd
 
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -175,7 +160,7 @@ async def create_policy(policy_id: str, policy_file: str = "policy.json", exampl
     """
     try:
         policy_data = load_json_file(policy_file, example_dir)
-        policy_obj = create_policy_from_json(policy_data)
+        policy_obj = model_policy_from_json(policy_data)
 
         ditto_client = create_ditto_client()
 
@@ -208,7 +193,7 @@ async def create_thing(thing_id: str, thing_file: str = "thing.json", example_di
     """
     try:
         thing_data = load_json_file(thing_file, example_dir)
-        thing_obj = create_thing_from_json(thing_data)
+        thing_obj = model_thing_from_json(thing_data)
 
         ditto_client = create_ditto_client()
 
@@ -241,9 +226,6 @@ async def update_thing_property(thing_id: str, path: str, value: Any) -> bool:
     """
     try:
         ditto_client = create_ditto_client()
-
-        # Create a patch object with the path and value
-        from ditto_client.generated.models.patch_thing import PatchThing
 
         patch_data = PatchThing()
 
@@ -323,13 +305,8 @@ async def create_connection(connection_file: str = "connection.json", example_di
         True if successful, False otherwise
     """
     try:
+        devops_ditto_client = create_ditto_client(username="devops", password="foobar")
         connection_data = load_json_file(connection_file, example_dir)
-
-        # Use devops credentials for regular API connections
-        devops_auth_provider = BasicAuthProvider(user_name="devops", password="foobar")
-        devops_request_adapter = HttpxRequestAdapter(devops_auth_provider)
-        devops_request_adapter.base_url = DITTO_BASE_URL
-        ditto_client = DittoClient(devops_request_adapter)
 
         # Extract the actual connection data from the piggyback format
         if "piggybackCommand" in connection_data and "connection" in connection_data["piggybackCommand"]:
@@ -342,16 +319,13 @@ async def create_connection(connection_file: str = "connection.json", example_di
         if "id" in connection_config:
             del connection_config["id"]
 
-        # Create the proper model object for regular API
-        from ditto_client.generated.models.new_connection import NewConnection
-
         connection_obj = NewConnection()
 
         # For now, put everything in additional_data to avoid serialization issues
         connection_obj.additional_data = connection_config
 
         # Use the regular API to create connection (POST generates ID automatically)
-        await ditto_client.api.two.connections.post(connection_obj)
+        await devops_ditto_client.api.two.connections.post(connection_obj)
 
         print_success("Connection created successfully via regular API")
         return True
@@ -379,16 +353,8 @@ async def create_connection_piggyback(
         True if successful, False otherwise
     """
     try:
+        devops_ditto_client = create_ditto_client(username="devops", password="foobar")
         connection_data = load_json_file(connection_file, example_dir)
-
-        # Create a separate DevOps client with devops:foobar credentials
-        devops_auth_provider = BasicAuthProvider(user_name="devops", password="foobar")
-        devops_request_adapter = HttpxRequestAdapter(devops_auth_provider)
-        devops_request_adapter.base_url = DITTO_BASE_URL
-        devops_ditto_client = DittoClient(devops_request_adapter)
-
-        # Create the proper model object for DevOps API
-        from ditto_client.generated.models.base_piggyback_command_request_schema import BasePiggybackCommandRequestSchema
 
         piggyback_command = BasePiggybackCommandRequestSchema()
         piggyback_command.additional_data = connection_data

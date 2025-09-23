@@ -1,22 +1,22 @@
 # Ditto
 
 [tool.poe.tasks.start-ditto]
-help = "Initialize Ditto locally with horizontal scaling"
+help = "Initialize Ditto locally"
 cwd = "docker"
 cmd = "docker compose -f docker-compose.yml up"
 
 [tool.poe.tasks.stop-ditto]
-help = "Shutdown local Ditto with horizontal scaling"
+help = "Shutdown local Ditto"
 cwd = "docker"
 cmd = "docker compose -f docker-compose.yml down"
 
 [tool.poe.tasks.start-ditto-ferret]
-help = "Initialize Ditto locally with horizontal scaling"
+help = "Initialize Ditto locally with ferretDB"
 cwd = "docker"
 cmd = "docker compose -f docker-compose-ferret.yml up"
 
 [tool.poe.tasks.stop-ditto-ferret]
-help = "Shutdown local Ditto with horizontal scaling"
+help = "Shutdown local Ditto with ferretDB"
 cwd = "docker"
 cmd = "docker compose -f docker-compose-ferret.yml down"
 

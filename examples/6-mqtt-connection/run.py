@@ -23,7 +23,6 @@ import sys
 import time
 
 from utils.ditto_operations import (
-    create_connection_piggyback,
     create_policy,
     create_thing,
     create_connection_piggyback,
