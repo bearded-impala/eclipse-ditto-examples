@@ -23,10 +23,10 @@ import sys
 import time
 
 from utils.ditto_operations import (
-    cleanup,
+    create_connection_piggyback,
     create_policy,
     create_thing,
-    load_json_file,
+    create_connection_piggyback,
     print_error,
     print_info,
     print_section,
@@ -54,73 +54,6 @@ def start_mqtt_broker() -> bool:
         return True
     except subprocess.CalledProcessError as e:
         print_error(f"Failed to start MQTT broker: {e}")
-        return False
-
-
-def create_thing_from_file(thing_id: str, filename: str) -> bool:
-    """Create a thing from a JSON file."""
-    try:
-        print_section(f"Creating Thing: {thing_id}")
-
-        thing_data = load_json_file(filename)
-        url = f"{os.getenv('DITTO_API_BASE', 'http://localhost:8080/api/2')}/things/{thing_id}"
-        headers = {"Content-Type": "application/json"}
-        auth = (
-            os.getenv("DITTO_USERNAME", "ditto"),
-            os.getenv("DITTO_PASSWORD", "ditto"),
-        )
-
-        import httpx
-
-        session = httpx.Client(timeout=30.0)
-        response = session.put(url, json=thing_data, auth=auth, headers=headers)
-
-        if 200 <= response.status_code < 300:
-            print_success(f"Thing created: {thing_id}")
-            return True
-        else:
-            print_error(
-                f"Failed to create thing {thing_id}. Status: {response.status_code}"
-            )
-            print_info(f"Response: {response.text}")
-            return False
-    except Exception as e:
-        print_error(f"Error creating thing {thing_id}: {e}")
-        return False
-
-
-def create_connection_from_file(filename: str, connection_type: str) -> bool:
-    """Create a connection from a JSON file."""
-    try:
-        print_section(f"Creating {connection_type} Connection")
-
-        connection_data = load_json_file(filename)
-        connection_timeout = os.getenv("CONNECTION_TIMEOUT", "60")
-
-        # Use devops API for connections
-        url = f"{os.getenv('DITTO_DEVOPS_API', 'http://localhost:8080/devops')}/piggyback/connectivity?timeout={connection_timeout}"
-        headers = {"Content-Type": "application/json"}
-        auth = (
-            os.getenv("DITTO_DEVOPS_USERNAME", "devops"),
-            os.getenv("DITTO_DEVOPS_PASSWORD", "foobar"),
-        )
-
-        import httpx
-
-        session = httpx.Client(timeout=30.0)
-        response = session.post(url, json=connection_data, auth=auth, headers=headers)
-
-        if 200 <= response.status_code < 300:
-            print_success(f"{connection_type} connection created")
-            return True
-        else:
-            print_error(
-                f"Failed to create {connection_type} connection. Status: {response.status_code}"
-            )
-            print_info(f"Response: {response.text}")
-            return False
-    except Exception as e:
-        print_error(f"Error creating {connection_type} connection: {e}")
         return False
 
 
@@ -161,20 +94,20 @@ async def main():
             sys.exit(1)
 
         # Step 3: Create Ditto things
-        if not create_thing_from_file(sensor01_id, "sensor01.json"):
+        if not await create_thing(sensor01_id, "sensor01.json", current_dir):
             print_error("Failed to create sensor01")
             sys.exit(1)
         
-        if not create_thing_from_file(sensor02_id, "sensor02.json"):
+        if not await create_thing(sensor02_id, "sensor02.json", current_dir):
             print_error("Failed to create sensor02")
             sys.exit(1)
 
         # Step 4: Create MQTT connections
-        if not create_connection_from_file("connection_source.json", "MQTT source"):
+        if not await create_connection_piggyback("connection_source.json", current_dir):
             print_error("Failed to create MQTT source connection")
             sys.exit(1)
         
-        if not create_connection_from_file("connection_target.json", "MQTT target"):
+        if not await create_connection_piggyback("connection_target.json", current_dir):
             print_error("Failed to create MQTT target connection")
             sys.exit(1)
 
@@ -203,8 +136,6 @@ async def main():
     except Exception as e:
         print_error(f"Unexpected error in Example 6: {e}")
         sys.exit(1)
-    finally:
-        cleanup()
 
 
 if __name__ == "__main__":

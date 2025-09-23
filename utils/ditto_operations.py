@@ -447,36 +447,3 @@ async def search_things(filter_expr: Optional[str] = None, page_size: int = 200)
         print_error(f"Error searching things: {e}")
         return {"items": [], "cursor": None}
 
-
-def cleanup() -> bool:
-    """
-    Simple cleanup function that can be imported by examples.
-    
-    This function provides a lightweight cleanup that doesn't require asyncio.
-    For more comprehensive cleanup, use the cleanup.py script.
-    
-    Returns:
-        True if cleanup appears successful, False otherwise
-    """
-    try:
-        import subprocess
-        import sys
-        
-        # Run the cleanup script using uv
-        result = subprocess.run(
-            [sys.executable, "-m", "cleanup"],
-            cwd=Path(__file__).parent.parent,
-            capture_output=True,
-            text=True
-        )
-        
-        if result.returncode == 0:
-            print_success("Cleanup completed successfully")
-            return True
-        else:
-            print_error(f"Cleanup failed: {result.stderr}")
-            return False
-            
-    except Exception as e:
-        print_error(f"Error during cleanup: {e}")
-        return False

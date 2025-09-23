@@ -22,7 +22,6 @@ import os
 import sys
 
 from utils.ditto_operations import (
-    cleanup,
     create_policy,
     create_thing,
     get_thing,
@@ -103,8 +102,6 @@ async def main():
     except Exception as e:
         print_error(f"Unexpected error in Example 4: {e}")
         sys.exit(1)
-    finally:
-        cleanup()
 
 
 if __name__ == "__main__":

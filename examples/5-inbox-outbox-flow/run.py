@@ -27,8 +27,7 @@ import sys
 import time
 
 from utils.ditto_operations import (
-    cleanup,
-    create_connection,
+    create_connection_piggyback,
     create_policy,
     create_thing,
     get_thing,
@@ -76,7 +75,7 @@ async def main():
             sys.exit(1)
 
         # Step 3: Create Connection
-        if not await create_connection("connection.json", current_dir):
+        if not await create_connection_piggyback("connection.json", current_dir):
             print_error("Failed to create connection")
             sys.exit(1)
 
@@ -129,8 +128,6 @@ async def main():
     except Exception as e:
         print_error(f"Unexpected error in Example 5: {e}")
         sys.exit(1)
-    finally:
-        cleanup()
 
 
 if __name__ == "__main__":
