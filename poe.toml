@@ -90,6 +90,12 @@ help = "Create Things from schema"
 cwd = "examples/8-thing-search"
 cmd = "python test_queries.py"
 
+# Example 9
+[tool.poe.tasks.test-client]
+help = "Eclipse-ditto operations using a python client"
+cwd = "examples/9-python-client"
+cmd = "python ditto_operations.py"
+
 # Helpers
 
 [tool.poe.tasks.ruff]
