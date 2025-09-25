@@ -8,6 +8,8 @@ import argparse
 import json
 import random
 import sys
+import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
@@ -63,7 +65,7 @@ def create_policy(
 
 
 def load_schema(schema_path: str) -> Dict[str, Any]:
-    """Load schema from JSON file."""
+    """Load JSON schema from file."""
     try:
         with open(schema_path, "r") as f:
             return json.load(f)
@@ -72,25 +74,73 @@ def load_schema(schema_path: str) -> Dict[str, Any]:
         sys.exit(1)
 
 
-def randomize_values(node: Any) -> Any:
-    """Recursively randomize values in a schema node."""
-    if isinstance(node, dict):
-        return {k: randomize_values(v) for k, v in node.items()}
-    elif isinstance(node, list):
-        if not node:
-            return []
-        # If it's a list of lists, choose one of the inner lists
-        if all(isinstance(i, list) for i in node):
-            return random.choice(node)
-        # Otherwise choose a random item from the list
-        return random.choice(node)
-    return node
+def generate_from_schema(schema: Dict[str, Any]) -> Any:
+    """Generate data from a JSON schema with x-random-from extensions."""
+    
+    def generate_value(schema_node: Dict[str, Any]) -> Any:
+        """Generate a value based on schema node."""
+        # Check for custom randomization field
+        if "x-random-from" in schema_node:
+            return random.choice(schema_node["x-random-from"])
+        
+        # Handle const values
+        if "const" in schema_node:
+            return schema_node["const"]
+        
+        # Handle different types
+        schema_type = schema_node.get("type", "string")
+        
+        if schema_type == "object":
+            result = {}
+            properties = schema_node.get("properties", {})
+            required = schema_node.get("required", [])
+            
+            for prop_name, prop_schema in properties.items():
+                if prop_name in required or random.random() > 0.3:  # Include most optional props
+                    result[prop_name] = generate_value(prop_schema)
+            return result
+            
+        elif schema_type == "array":
+            items_schema = schema_node.get("items", {})
+            # Generate 1-3 items for arrays unless x-random-from is specified
+            if "x-random-from" in schema_node:
+                return random.choice(schema_node["x-random-from"])
+            else:
+                array_length = random.randint(1, 3)
+                return [generate_value(items_schema) for _ in range(array_length)]
+                
+        elif schema_type == "string":
+            if schema_node.get("format") == "date-time":
+                return datetime.now().isoformat() + "Z"
+            elif schema_node.get("format") == "date":
+                return datetime.now().strftime("%Y-%m-%d")
+            elif "pattern" in schema_node:
+                # For patterned strings like thingId, return a placeholder that will be overridden
+                pattern = schema_node["pattern"]
+                if "camera-" in pattern:
+                    return "org.eclipse.ditto:camera-placeholder"
+                else:
+                    return f"generated_string_{random.randint(1000, 9999)}"
+            else:
+                return f"generated_string_{random.randint(1000, 9999)}"
+                
+        elif schema_type == "integer":
+            return random.randint(1, 100)
+            
+        elif schema_type == "number":
+            return round(random.uniform(0.1, 100.0), 2)
+            
+        elif schema_type == "boolean":
+            return random.choice([True, False])
+            
+        else:
+            return None
+    
+    return generate_value(schema)
 
 
 def generate_thing_id(thing_type: str) -> str:
     """Generate a unique thing ID."""
-    import uuid
-
     short_id = uuid.uuid4().hex[:6]
     return f"org.eclipse.ditto:{thing_type}-{short_id}"
 
@@ -137,7 +187,7 @@ def main():
         "--schema",
         type=str,
         default="schema/camera.json",
-        help="Path to schema file (default: schema/camera.json)",
+        help="Path to JSON schema file (default: schema/camera.json)",
     )
     parser.add_argument(
         "--ditto-url",
@@ -187,16 +237,20 @@ def main():
         success_count = 0
 
         for _i in range(args.count):
-            # Generate randomized thing data
-            thing_data = randomize_values(schema.copy())
+            # Generate data from JSON schema
+            thing_data = generate_from_schema(schema)
 
             # Generate unique thing ID
             thing_type = thing_data.get("attributes", {}).get("type", "thing")
             thing_id = generate_thing_id(thing_type)
 
-            # Update thing ID and policy ID
+            # Update thing ID and policy ID (override schema values)
             thing_data["thingId"] = thing_id
             thing_data["policyId"] = "org.eclipse.ditto:read-write-policy"
+            
+            # Ensure timestamp is current
+            if "attributes" in thing_data:
+                thing_data["attributes"]["timestamp"] = datetime.now().isoformat() + "Z"
 
             # Create the thing
             if create_thing(

@@ -1,246 +1,387 @@
 {
-  "thingId": "org.eclipse.ditto:camera-a471",
-  "policyId": "org.eclipse.ditto:read-write-policy",
-  "attributes": {
-    "type": "camera",
-    "version": [
-      2,
-      3
-    ],
-    "status": [
-      true,
-      false
-    ],
-    "location": [
-      "Kitchen",
-      "Office",
-      "Garage",
-      "Lab"
-    ],
-    "manufacturer": [
-      "Acme Corp",
-      "HID"
-    ],
-    "timestamp": "2025-07-23T17:44:01.613Z"
-  },
-  "features": {
-    "video": {
-      "properties": {
-        "url": [
-          "http://eelslap.com/",
-          "https://isitchristmas.com/",
-          "https://www.trashloop.com/",
-          "https://willrobotstakemyjob.com/"
-        ],
-        "resolution": "720p",
-        "codec": [
-          "H.264",
-          "H.265"
-        ],
-        "frameRate": [
-          24,
-          30,
-          60,
-          90,
-          120,
-          240
-        ],
-        "streaming": [
-          true,
-          false
-        ],
-        "nightVision": [
-          true,
-          false
-        ],
-        "supportedResolutions": [
-          [
-            "480p",
-            "720p",
-            "1080p"
-          ],
-          [
-            "720p",
-            "1080p",
-            "4K"
-          ]
-        ]
-      }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://eclipse.org/ditto/schema/camera",
+  "title": "Camera Thing Schema",
+  "description": "JSON Schema for Eclipse Ditto camera things with randomizable properties",
+  "type": "object",
+  "properties": {
+    "thingId": {
+      "type": "string",
+      "pattern": "^org\\.eclipse\\.ditto:camera-[a-f0-9]{6}$",
+      "description": "Generated thing ID"
     },
-    "motionDetection": {
+    "policyId": {
+      "type": "string",
+      "const": "org.eclipse.ditto:read-write-policy"
+    },
+    "attributes": {
+      "type": "object",
       "properties": {
-        "enabled": [
-          true,
-          false
-        ],
-        "sensitivityLevel": [
-          1,
-          2,
-          3,
-          4,
-          5
-        ],
-        "zone": {
-          "id": [
-            "zone-1",
-            "zone-2",
-            "zone-3"
-          ],
-          "x": [
-            0.1,
-            0.6,
-            0.8
-          ],
-          "y": [
-            0.1,
-            0.2,
-            0.9
-          ],
-          "width": [
-            0.3,
-            0.2,
-            0.5
-          ],
-          "height": [
-            0.3,
-            0.4,
-            0.5
-          ]
+        "type": {
+          "type": "string",
+          "const": "camera"
         },
-        "lastDetection": {
-          "timestamp": "2025-07-23T17:43:00Z",
-          "confidence": [
-            0.15,
-            0.25,
-            0.34,
-            0.50,
-            0.67,
-            0.75,
-            0.87,
-            0.95
-          ],
-          "type": [
-            "human",
-            "bear",
-            "dog",
-            "god",
-            "cat"
-          ]
-        }
-      }
-    },
-    "storage": {
-      "properties": {
-        "type": [
-          "microSD",
-          "cloud"
-        ],
-        "capacityGB": [
-          64,
-          128,
-          256,
-          512
-        ],
-        "usedSpaceGB": [
-          10,
-          20,
-          30,
-          40,
-          50
-        ],
-        "recordingMode": [
-          "event-based",
-          "continuous"
-        ],
-        "overwrite": [
-          true,
-          false
-        ]
-      }
-    },
-    "network": {
-      "properties": {
-        "ip": "192.168.1.42",
-        "mac": "00:1B:44:11:3A:B7",
-        "signalStrength": [0, 20, 40, 60, 80, 100],
-        "connected": [
-          true,
-          false
-        ],
-        "connectionType": [
-          "WiFi",
-          "Ethernet"
-        ]
-      }
-    },
-    "health": {
-      "properties": {
-        "uptimeSeconds": [452390, 123456, 987654, 654321, 321654, 789012, 123789],
-        "temperatureC": [9, 12, 25.2, 35.6, 20.1, 40.0, 30.5],
-        "cpuLoad": [0.37, 0.45, 0.55, 0.65, 0.75, 0.85],
-        "lastReboot": [
-          "2025-07-21T10:12:44Z",
-          "2024-12-21T05:12:46Z",
-          "2025-05-21T10:44:34Z",
-          "2025-03-21T11:12:49Z"
-        ],
-        "errors": [
-          "None"
-        ]
-      }
-    },
-    "firmware": {
-      "properties": {
-        "version": [
-          "v1.3.1",
-          "v1.2.8",
-          "v1.2.9-beta",
-          "v1.2.9-alpha"
-        ],
-        "lastUpdate": [
-          "2025-07-21T10:12:44Z",
-          "2024-12-21T05:12:46Z",
-          "2025-05-21T10:44:34Z",
-          "2025-03-21T11:12:49Z"
-        ],
-        "availableUpdate": {
-          "version": [
-            "v1.3.1",
-            "v1.2.8",
-            "v1.2.9-beta",
-            "v1.2.9-alpha"
-          ],
-          "releaseDate": [
-            "2025-07-20",
-            "2025-05-19",
-            "2024-12-21"
-          ],
-          "changelog": [
-            "Improved motion detection",
-            "Security patch CVE-2025-4201",
-            "Stream stability fixes"
-          ]
-        }
-      }
-    },
-    "analytics": {
-      "properties": {
-        "facesDetected": [15, 23, 42, 16, 30],
-        "peopleCount": {
-          "lastHour": [1, 2, 3, 4, 5, 6, 7],
-          "today": [7, 8, 9, 10, 11, 12, 13]
-        },
-        "intrusionEvent": [
-          {
-            "timestamp": "2025-07-23T03:12:01Z",
-            "zone": "zone-2"
+        "version": {
+          "type": "array",
+          "items": {
+            "type": "integer"
           },
-          {
-            "timestamp": "2025-07-23T07:58:23Z",
-            "zone": "zone-1"
-          }
-        ]
-      }
+          "x-random-from": [2, 3]
+        },
+        "status": {
+          "type": "boolean",
+          "x-random-from": [true, false]
+        },
+        "location": {
+          "type": "string",
+          "x-random-from": ["Kitchen", "Office", "Garage", "Lab"]
+        },
+        "manufacturer": {
+          "type": "string",
+          "x-random-from": ["Acme Corp", "HID"]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Generated timestamp"
+        }
+      },
+      "required": ["type", "version", "status", "location", "manufacturer", "timestamp"]
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "video": {
+          "type": "object",
+          "properties": {
+            "properties": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "x-random-from": [
+                    "http://eelslap.com/",
+                    "https://isitchristmas.com/",
+                    "https://www.trashloop.com/",
+                    "https://willrobotstakemyjob.com/"
+                  ]
+                },
+                "resolution": {
+                  "type": "string",
+                  "const": "720p"
+                },
+                "codec": {
+                  "type": "string",
+                  "x-random-from": ["H.264", "H.265"]
+                },
+                "frameRate": {
+                  "type": "integer",
+                  "x-random-from": [24, 30, 60, 90, 120, 240]
+                },
+                "streaming": {
+                  "type": "boolean",
+                  "x-random-from": [true, false]
+                },
+                "nightVision": {
+                  "type": "boolean",
+                  "x-random-from": [true, false]
+                },
+                "supportedResolutions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "x-random-from": [
+                    ["480p", "720p", "1080p"],
+                    ["720p", "1080p", "4K"]
+                  ]
+                }
+              },
+              "required": ["url", "resolution", "codec", "frameRate", "streaming", "nightVision", "supportedResolutions"]
+            }
+          },
+          "required": ["properties"]
+        },
+        "motionDetection": {
+          "type": "object",
+          "properties": {
+            "properties": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "x-random-from": [true, false]
+                },
+                "sensitivityLevel": {
+                  "type": "integer",
+                  "x-random-from": [1, 2, 3, 4, 5]
+                },
+                "zone": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "x-random-from": ["zone-1", "zone-2", "zone-3"]
+                    },
+                    "x": {
+                      "type": "number",
+                      "x-random-from": [0.1, 0.6, 0.8]
+                    },
+                    "y": {
+                      "type": "number",
+                      "x-random-from": [0.1, 0.2, 0.9]
+                    },
+                    "width": {
+                      "type": "number",
+                      "x-random-from": [0.3, 0.2, 0.5]
+                    },
+                    "height": {
+                      "type": "number",
+                      "x-random-from": [0.3, 0.4, 0.5]
+                    }
+                  },
+                  "required": ["id", "x", "y", "width", "height"]
+                },
+                "lastDetection": {
+                  "type": "object",
+                  "properties": {
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time",
+                      "const": "2025-07-23T17:43:00Z"
+                    },
+                    "confidence": {
+                      "type": "number",
+                      "x-random-from": [0.15, 0.25, 0.34, 0.50, 0.67, 0.75, 0.87, 0.95]
+                    },
+                    "type": {
+                      "type": "string",
+                      "x-random-from": ["human", "bear", "dog", "god", "cat"]
+                    }
+                  },
+                  "required": ["timestamp", "confidence", "type"]
+                }
+              },
+              "required": ["enabled", "sensitivityLevel", "zone", "lastDetection"]
+            }
+          },
+          "required": ["properties"]
+        },
+        "storage": {
+          "type": "object",
+          "properties": {
+            "properties": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "x-random-from": ["microSD", "cloud"]
+                },
+                "capacityGB": {
+                  "type": "integer",
+                  "x-random-from": [64, 128, 256, 512]
+                },
+                "usedSpaceGB": {
+                  "type": "integer",
+                  "x-random-from": [10, 20, 30, 40, 50]
+                },
+                "recordingMode": {
+                  "type": "string",
+                  "x-random-from": ["event-based", "continuous"]
+                },
+                "overwrite": {
+                  "type": "boolean",
+                  "x-random-from": [true, false]
+                }
+              },
+              "required": ["type", "capacityGB", "usedSpaceGB", "recordingMode", "overwrite"]
+            }
+          },
+          "required": ["properties"]
+        },
+        "network": {
+          "type": "object",
+          "properties": {
+            "properties": {
+              "type": "object",
+              "properties": {
+                "ip": {
+                  "type": "string",
+                  "const": "192.168.1.42"
+                },
+                "mac": {
+                  "type": "string",
+                  "const": "00:1B:44:11:3A:B7"
+                },
+                "signalStrength": {
+                  "type": "integer",
+                  "x-random-from": [0, 20, 40, 60, 80, 100]
+                },
+                "connected": {
+                  "type": "boolean",
+                  "x-random-from": [true, false]
+                },
+                "connectionType": {
+                  "type": "string",
+                  "x-random-from": ["WiFi", "Ethernet"]
+                }
+              },
+              "required": ["ip", "mac", "signalStrength", "connected", "connectionType"]
+            }
+          },
+          "required": ["properties"]
+        },
+        "health": {
+          "type": "object",
+          "properties": {
+            "properties": {
+              "type": "object",
+              "properties": {
+                "uptimeSeconds": {
+                  "type": "integer",
+                  "x-random-from": [452390, 123456, 987654, 654321, 321654, 789012, 123789]
+                },
+                "temperatureC": {
+                  "type": "number",
+                  "x-random-from": [9, 12, 25.2, 35.6, 20.1, 40.0, 30.5]
+                },
+                "cpuLoad": {
+                  "type": "number",
+                  "x-random-from": [0.37, 0.45, 0.55, 0.65, 0.75, 0.85]
+                },
+                "lastReboot": {
+                  "type": "string",
+                  "format": "date-time",
+                  "x-random-from": [
+                    "2025-07-21T10:12:44Z",
+                    "2024-12-21T05:12:46Z",
+                    "2025-05-21T10:44:34Z",
+                    "2025-03-21T11:12:49Z"
+                  ]
+                },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "const": ["None"]
+                }
+              },
+              "required": ["uptimeSeconds", "temperatureC", "cpuLoad", "lastReboot", "errors"]
+            }
+          },
+          "required": ["properties"]
+        },
+        "firmware": {
+          "type": "object",
+          "properties": {
+            "properties": {
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "string",
+                  "x-random-from": ["v1.3.1", "v1.2.8", "v1.2.9-beta", "v1.2.9-alpha"]
+                },
+                "lastUpdate": {
+                  "type": "string",
+                  "format": "date-time",
+                  "x-random-from": [
+                    "2025-07-21T10:12:44Z",
+                    "2024-12-21T05:12:46Z",
+                    "2025-05-21T10:44:34Z",
+                    "2025-03-21T11:12:49Z"
+                  ]
+                },
+                "availableUpdate": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "type": "string",
+                      "x-random-from": ["v1.3.1", "v1.2.8", "v1.2.9-beta", "v1.2.9-alpha"]
+                    },
+                    "releaseDate": {
+                      "type": "string",
+                      "format": "date",
+                      "x-random-from": ["2025-07-20", "2025-05-19", "2024-12-21"]
+                    },
+                    "changelog": {
+                      "type": "string",
+                      "x-random-from": [
+                        "Improved motion detection",
+                        "Security patch CVE-2025-4201",
+                        "Stream stability fixes"
+                      ]
+                    }
+                  },
+                  "required": ["version", "releaseDate", "changelog"]
+                }
+              },
+              "required": ["version", "lastUpdate", "availableUpdate"]
+            }
+          },
+          "required": ["properties"]
+        },
+        "analytics": {
+          "type": "object",
+          "properties": {
+            "properties": {
+              "type": "object",
+              "properties": {
+                "facesDetected": {
+                  "type": "integer",
+                  "x-random-from": [15, 23, 42, 16, 30]
+                },
+                "peopleCount": {
+                  "type": "object",
+                  "properties": {
+                    "lastHour": {
+                      "type": "integer",
+                      "x-random-from": [1, 2, 3, 4, 5, 6, 7]
+                    },
+                    "today": {
+                      "type": "integer",
+                      "x-random-from": [7, 8, 9, 10, 11, 12, 13]
+                    }
+                  },
+                  "required": ["lastHour", "today"]
+                },
+                "intrusionEvent": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "timestamp": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "zone": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["timestamp", "zone"]
+                  },
+                  "x-random-from": [
+                    [
+                      {
+                        "timestamp": "2025-07-23T03:12:01Z",
+                        "zone": "zone-2"
+                      },
+                      {
+                        "timestamp": "2025-07-23T07:58:23Z",
+                        "zone": "zone-1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "required": ["facesDetected", "peopleCount", "intrusionEvent"]
+            }
+          },
+          "required": ["properties"]
+        }
+      },
+      "required": ["video", "motionDetection", "storage", "network", "health", "firmware", "analytics"]
     }
-  }
+  },
+  "required": ["thingId", "policyId", "attributes", "features"]
 }
