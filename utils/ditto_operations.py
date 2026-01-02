@@ -15,7 +15,7 @@ import rich
 from dotenv import load_dotenv
 from kiota_http.httpx_request_adapter import HttpxRequestAdapter
 
-from ditto_client.basic_auth import BasicAuthProvider
+from ditto_client import BasicAuthProvider
 from ditto_client.generated.ditto_client import DittoClient
 from ditto_client.generated.models.new_policy import NewPolicy
 from ditto_client.generated.models.new_thing import NewThing
