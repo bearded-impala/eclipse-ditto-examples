@@ -33,11 +33,13 @@ This repository contains comprehensive examples and experiments with Eclipse Dit
    uv run poe start-ditto
    ```
 
-4. **Explore the examples:**
+4. **Configure authentication (.env file):**
 
    Make sure to rename .env.example to .env at the root of the repository.
 
+   The `.env` file controls authentication via the `AUTH_TYPE` 
 
+5. **Explore the examples:**
    ```bash
    uv run poe --help  # See all available commands
    ```
