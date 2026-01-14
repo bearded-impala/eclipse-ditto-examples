@@ -90,7 +90,25 @@ help = "Create Things from schema"
 cwd = "examples/8-thing-search"
 cmd = "python test_queries.py"
 
-# Example 9
+[tool.poe.tasks.e9-mock]
+help = "Test JWT authentication with mock oauth server"
+shell = """
+docker run --rm \
+  --network docker_default \
+  -v $(pwd)/examples/9-jwt-auth/jwt_api_example.py:/app/jwt_api_example.py:ro \
+  -v $(pwd)/examples/9-jwt-auth/policy.json:/app/policy.json:ro \
+  -v $(pwd)/utils:/app/utils:ro \
+  -e AUTH_TYPE=BEARER \
+  -e JWT_ISSUER=oauth \
+  -e JWT_SUBJECT=ditto \
+  -e DITTO_HOST=nginx \
+  -e DITTO_PORT=80 \
+  -e DITTO_API_BASE=http://nginx/api/2 \
+  -e PYTHONPATH=/app \
+  python:3.11-slim \
+  sh -c 'pip install -q httpx pyjwt python-dotenv rich ditto-client && python /app/jwt_api_example.py'
+"""
+
 [tool.poe.tasks.test-client]
 help = "Eclipse-ditto operations using a python client"
 cwd = "examples/9-python-client"
