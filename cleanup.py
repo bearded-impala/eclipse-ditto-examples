@@ -125,7 +125,6 @@ def cleanup_ditto():
             os.getenv("DOORLOCK_001_POLICY_ID"),
             os.getenv("KETTLE_001_POLICY_ID"),
             os.getenv("SENSOR_POLICY_ID"),
-            os.getenv("TEST_POLICY_ID"),
         ]
 
         for policy_id in known_policies:

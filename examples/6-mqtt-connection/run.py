@@ -62,12 +62,12 @@ async def main():
         # Get configuration from environment variables
         sensor01_id = os.getenv("SENSOR01_ID")
         sensor02_id = os.getenv("SENSOR02_ID")
-        policy_id = os.getenv("TEST_POLICY_ID")
+        policy_id = os.getenv("SENSOR_POLICY_ID")
         mqtt_topic_prefix = os.getenv("MQTT_TOPIC_PREFIX")
 
         if not all([sensor01_id, sensor02_id, policy_id, mqtt_topic_prefix]):
             print_error(
-                "Missing required environment variables: SENSOR01_ID, SENSOR02_ID, TEST_POLICY_ID, or MQTT_TOPIC_PREFIX"
+                "Missing required environment variables: SENSOR01_ID, SENSOR02_ID, SENSOR_POLICY_ID, or MQTT_TOPIC_PREFIX"
             )
             print_info("Please check your .env file or environment variables")
             sys.exit(1)
