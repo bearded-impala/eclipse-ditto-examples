@@ -1,9 +1,9 @@
 {
-    "policyId": "org.eclipse.ditto:sensor-policy",
+    "policyId": "org.eclipse.ditto:sensor-policy-jwt",
     "entries": {
         "devicePermissions": {
             "subjects": {
-                "device:sensor-001": {
+                "device:sensor-jwt-001": {
                     "type": "ditto client"
                 }
             },
@@ -21,7 +21,7 @@
                 "nginx:ditto": {
                     "type": "basic auth user"
                 },
-                "oauth:ditto": {
+                "ditto:ditto": {
                     "type": "JWT subject"
                 }
             },
