@@ -279,8 +279,6 @@ services:
     depends_on:
       - policies
       - oauth
-    volumes:
-      - ./cognito-docdb.jks:/opt/ditto/cognito-docdb.jks:ro
     ports:
       - "8081:8080"
     environment:
@@ -303,12 +301,12 @@ services:
         -Dpekko.cluster.failure-detector.expected-response-after=10s
         -Dpekko.cluster.failure-detector.acceptable-heartbeat-pause=20s
         -Dpekko.cluster.downing-provider-class=
-        -Djavax.net.ssl.trustStore="/opt/ditto/cognito-docdb.jks"
-        -Djavax.net.ssl.trustStorePassword="changeit"
-        -Dditto.gateway.authentication.oauth.protocol=http
+        -Dditto.gateway.authentication.oauth.protocol=${DITTO_OAUTH_PROTOCOL:-http}
         -Dditto.gateway.authentication.oauth.openid-connect-issuers.ui.issuer=localhost:8080/ditto
         -Dditto.gateway.authentication.oauth.openid-connect-issuers.ditto.issuer=oauth:9900/ditto
         -Dditto.gateway.authentication.oauth.openid-connect-issuers.ditto.auth-subjects.0="{{ jwt:sub }}"
+        -Dditto.gateway.authentication.oauth.openid-connect-issuers.cognito.issuer=cognito-idp.${COGNITO_REGION:-us-east-1}.amazonaws.com/${COGNITO_USER_POOL_ID:-_unset}
+        -Dditto.gateway.authentication.oauth.openid-connect-issuers.cognito.auth-subjects.0="{{ jwt:sub }}"
       # in order to write logs into a file you can enable this by setting the following env variable
       # the log file(s) can be found in /var/log/ditto directory on the host machine
       # DITTO_LOGGING_FILE_APPENDER: "true"
