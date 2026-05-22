@@ -3,12 +3,12 @@
 [tool.poe.tasks.start-ditto]
 help = "Initialize Ditto locally"
 cwd = "docker"
-cmd = "docker compose -f docker-compose.yml up"
+cmd = "docker compose -f docker-compose.yml --env-file ../.env up"
 
 [tool.poe.tasks.stop-ditto]
 help = "Shutdown local Ditto"
 cwd = "docker"
-cmd = "docker compose -f docker-compose.yml down"
+cmd = "docker compose -f docker-compose.yml --env-file ../.env down"
 
 [tool.poe.tasks.start-ditto-ferret]
 help = "Initialize Ditto locally with ferretDB"
@@ -99,15 +99,20 @@ docker run --rm \
   -v $(pwd)/examples/9-jwt-auth/policy.json:/app/policy.json:ro \
   -v $(pwd)/utils:/app/utils:ro \
   -e AUTH_TYPE=BEARER \
-  -e JWT_ISSUER=oauth \
+  -e JWT_ISSUER=oauth:9900 \
   -e JWT_SUBJECT=ditto \
   -e DITTO_HOST=nginx \
   -e DITTO_PORT=80 \
   -e DITTO_API_BASE=http://nginx/api/2 \
   -e PYTHONPATH=/app \
   python:3.11-slim \
-  sh -c 'pip install -q httpx pyjwt python-dotenv rich ditto-client && python /app/jwt_api_example.py'
+  sh -c 'pip install -q httpx python-dotenv rich ditto-client microsoft-kiota-http && python /app/jwt_api_example.py'
 """
+
+[tool.poe.tasks.e9-cognito]
+help = "Test JWT authentication with cognito"
+cwd = "examples/9-jwt-auth"
+cmd = "python jwt_cognito_example.py"
 
 [tool.poe.tasks.test-client]
 help = "Eclipse-ditto operations using a python client"
