@@ -87,17 +87,15 @@ def _determine_auth(token: Optional[str] = None) -> Tuple[Optional[str], str]:
     if AUTH_TYPE == "BEARER":
         if not JWT_ISSUER:
             print_error("AUTH_TYPE=BEARER but JWT_ISSUER is not configured in .env")
-            print_info("Falling back to basic auth")
-            return None, "basic"
-        
+            sys.exit(1)
+
         print_info(f"Auth mode: bearer (AUTH_TYPE=BEARER, issuer='{JWT_ISSUER}', subject='{JWT_SUBJECT}')")
         fetched_token = _get_jwt_token(JWT_ISSUER, JWT_SUBJECT)
-        
+
         if fetched_token:
             return fetched_token, "bearer-env"
-        else:
-            print_error("Failed to fetch JWT token, falling back to basic auth")
-            return None, "basic"
+        print_error("Failed to fetch JWT token (AUTH_TYPE=BEARER does not fall back to basic auth)")
+        sys.exit(1)
     
     # Default to basic auth
     print_info(f"Auth mode: basic (AUTH_TYPE={AUTH_TYPE})")
