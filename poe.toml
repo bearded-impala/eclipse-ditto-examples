@@ -20,6 +20,16 @@ help = "Shutdown local Ditto with ferretDB"
 cwd = "docker"
 cmd = "docker compose -f docker-compose-ferret.yml down"
 
+[tool.poe.tasks.start-ditto-without-ui-nginx]
+help = "Start a minimal Ditto (no nginx / UI / swagger) - used by Example 10"
+cwd = "docker"
+cmd = "docker compose -f docker-compose-minimal.yml --env-file ../.env up"
+
+[tool.poe.tasks.stop-ditto-without-ui-nginx]
+help = "Shutdown the minimal Ditto stack"
+cwd = "docker"
+cmd = "docker compose -f docker-compose-minimal.yml --env-file ../.env down"
+
 # MQTT broker
 
 [tool.poe.tasks.start-mqtt-broker]
@@ -113,6 +123,24 @@ docker run --rm \
 help = "Test JWT authentication with cognito"
 cwd = "examples/9-jwt-auth"
 cmd = "python jwt_cognito_example.py"
+
+# Example 10
+[tool.poe.tasks.e10]
+help = "Direct gateway auth: pre-authenticated header + external JWT (no nginx/UI)"
+shell = """
+docker run --rm \
+  --network docker_default \
+  -v $(pwd)/examples/10-direct-gateway-auth:/app/example:ro \
+  -v $(pwd)/utils:/app/utils:ro \
+  -e AUTH_TYPE=PRE_AUTH \
+  -e PRE_AUTH_SUBJECT=nginx:ditto \
+  -e JWT_ISSUER=oauth:9900 \
+  -e JWT_SUBJECT=ditto \
+  -e DITTO_API_BASE=http://gateway:8080/api/2 \
+  -e PYTHONPATH=/app \
+  python:3.11-slim \
+  sh -c 'pip install -q httpx python-dotenv rich ditto-client microsoft-kiota-http && python /app/example/run.py'
+"""
 
 [tool.poe.tasks.test-client]
 help = "Eclipse-ditto operations using a python client"

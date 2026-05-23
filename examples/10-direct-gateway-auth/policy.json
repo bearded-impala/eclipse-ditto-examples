@@ -1,0 +1,31 @@
+{
+    "policyId": "org.eclipse.ditto:sensor-direct-policy",
+    "entries": {
+        "applicationPermissions": {
+            "subjects": {
+                "nginx:ditto": {
+                    "type": "pre-authenticated subject sent by the client"
+                },
+                "ditto:ditto": {
+                    "type": "external JWT subject (mock OAuth issuer 'ditto', sub='ditto')"
+                }
+            },
+            "resources": {
+                "policy:/": {
+                    "grant": [
+                        "READ",
+                        "WRITE"
+                    ],
+                    "revoke": []
+                },
+                "thing:/": {
+                    "grant": [
+                        "READ",
+                        "WRITE"
+                    ],
+                    "revoke": []
+                }
+            }
+        }
+    }
+}
