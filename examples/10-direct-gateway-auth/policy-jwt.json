@@ -1,0 +1,28 @@
+{
+    "policyId": "org.eclipse.ditto:e10-jwt-policy",
+    "entries": {
+        "DEFAULT": {
+            "subjects": {
+                "ditto:ditto": {
+                    "type": "external JWT subject"
+                }
+            },
+            "resources": {
+                "policy:/": {
+                    "grant": [
+                        "READ",
+                        "WRITE"
+                    ],
+                    "revoke": []
+                },
+                "thing:/": {
+                    "grant": [
+                        "READ",
+                        "WRITE"
+                    ],
+                    "revoke": []
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,133 @@
+# Minimal Ditto stack (no nginx, no UI, no swagger) plus a mock OAuth 2.0
+# server. Demonstrates how the gateway validates an externally-issued JWT on
+# /api/2 endpoints.
+#
+# The single configuration that unlocks this auth method is the OpenID Connect issuer registration on the gateway
+#
+# This stack puts EVERY auth-protected route on JWT, end-to-end:
+#   - /api/2 + /ws    via ditto.gateway.authentication.oauth.openid-connect-issuers
+#   - /devops + /api/2/connections via DEVOPS_AUTHENTICATION_METHOD=oauth2 +
+#     ditto.gateway.authentication.devops.oauth.openid-connect-issuers +
+#     DEVOPS_OAUTH2_SUBJECTS allow-list
+# =============================================================================
+
+services:
+  mongodb:
+    image: docker.io/mongo:8.2.3
+    command: mongod --storageEngine wiredTiger --noscripting
+    user: mongodb
+    restart: always
+    networks:
+      default:
+        aliases: [mongodb]
+
+  # Stands in for any real external IdP (AWS Cognito, Auth0, Keycloak, ...).
+  # Issuer URL of minted tokens is `http://oauth:9900/ditto` (matches gateway
+  # config below). `sub` claim is hardcoded to `ditto` so policies can use the
+  # subject `ditto:ditto`.
+  oauth:
+    image: ghcr.io/navikt/mock-oauth2-server:2.1.6
+    restart: always
+    networks:
+      default:
+        aliases: [oauth]
+    environment:
+      PORT: 9900
+      JSON_CONFIG: |
+          {
+            "interactiveLogin": false,
+            "httpServer": "NettyWrapper",
+            "tokenCallbacks": [
+              {
+                "issuerId": "ditto",
+                "tokenExpiry": 3600,
+                "requestMappings": [
+                  {
+                    "requestParam": "grant_type",
+                    "match": "*",
+                    "claims": { "sub": "ditto", "aud": ["ditto"] }
+                  }
+                ]
+              }
+            ]
+          }
+
+  policies:
+    image: docker.io/eclipse/ditto-policies:latest
+    restart: always
+    networks:
+      default:
+        aliases: [ditto-cluster]
+    environment:
+      BIND_HOSTNAME: 0.0.0.0
+      MONGO_DB_HOSTNAME: mongodb
+
+  things:
+    image: docker.io/eclipse/ditto-things:latest
+    restart: always
+    depends_on: [policies]
+    networks:
+      default:
+        aliases: [ditto-cluster]
+    environment:
+      BIND_HOSTNAME: 0.0.0.0
+      MONGO_DB_HOSTNAME: mongodb
+
+  gateway:
+    image: docker.io/eclipse/ditto-gateway:latest
+    restart: always
+    depends_on: [policies, things, oauth]
+    networks:
+      default:
+        aliases: [ditto-cluster]
+    ports:
+      - "8080:8080"
+    environment:
+      BIND_HOSTNAME: 0.0.0.0
+
+      # KEY CONFIG #1 - registers the mock OAuth server as a trusted
+      # issuer named `ditto` for the /api/2 + /ws routes. The gateway
+      # fetches JWKS from this URL and maps the JWT `sub` claim to the
+      # policy subject `ditto:<sub>`.
+      #
+      # KEY CONFIG #2 - the /devops route has its OWN auth realm and its
+      # OWN issuer registration. We register the SAME mock OAuth server
+      # under the SAME issuer name (`ditto`) so the resulting Ditto
+      # subject - `ditto:ditto` - lines up with DEVOPS_OAUTH2_SUBJECTS
+      # below. In production these would typically be different IdPs.
+      # Note on the last line: `devops-oauth2-subjects` is a LIST in
+      # HOCON. The env var DEVOPS_OAUTH2_SUBJECTS expects a string and
+      # would crash the gateway with "has type STRING rather than LIST".
+      # The `-D...devops-oauth2-subjects.0=...` form is HOCON's way of
+      # setting index 0 of a list - same pattern as `auth-subjects.0`
+      # above. Add `.1=...` for a second subject.
+      JAVA_TOOL_OPTIONS: >-
+        -Dditto.gateway.authentication.oauth.protocol=http
+        -Dditto.gateway.authentication.oauth.openid-connect-issuers.ditto.issuer=oauth:9900/ditto
+        -Dditto.gateway.authentication.oauth.openid-connect-issuers.ditto.auth-subjects.0="{{ jwt:sub }}"
+        -Dditto.gateway.authentication.devops.oauth.protocol=http
+        -Dditto.gateway.authentication.devops.oauth.openid-connect-issuers.ditto.issuer=oauth:9900/ditto
+        -Dditto.gateway.authentication.devops.oauth.openid-connect-issuers.ditto.auth-subjects.0="{{ jwt:sub }}"
+        -Dditto.gateway.authentication.devops.devops-oauth2-subjects.0=ditto:ditto
+
+      # KEY CONFIG #3 - flips /devops from the default `basic` mode to
+      # `oauth2`. With this set, /devops accepts JWTs validated against
+      # the devops issuer registered above (with the allow-list of
+      # Ditto subjects passed via JAVA_TOOL_OPTIONS above), and Basic
+      # Auth on /devops is REJECTED (basic and oauth2 are mutually
+      # exclusive on /devops).
+      DEVOPS_AUTHENTICATION_METHOD: oauth2
+
+      # Kept on purpose to demonstrate that in `oauth2` mode the password is ignored.
+      DEVOPS_PASSWORD: foobar
+
+  # One-shot client.
+  # Invoke with: `docker compose -f <this file> run --rm client`
+  client:
+    image: python:3.11-slim
+    profiles: [client]
+    depends_on: [gateway, oauth]
+    volumes:
+      - ../examples/10-direct-gateway-auth:/app:ro
+    working_dir: /app
+    command: sh -c "pip install -q httpx && python run-jwt.py"

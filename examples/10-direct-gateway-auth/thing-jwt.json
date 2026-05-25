@@ -1,0 +1,7 @@
+{
+    "thingId": "org.eclipse.ditto:e10-jwt-thing",
+    "policyId": "org.eclipse.ditto:e10-jwt-policy",
+    "attributes": {
+        "demo": "jwt"
+    }
+}

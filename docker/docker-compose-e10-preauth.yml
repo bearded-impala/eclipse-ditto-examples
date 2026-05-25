@@ -1,0 +1,75 @@
+# Minimal Ditto stack (no nginx, no UI, no swagger) that demonstrates how a
+# client can authenticate against /api/2 endpoints by sending the
+# `x-ditto-pre-authenticated` header itself.
+#
+# The single configuration that unlocks this auth method is:
+#
+#       gateway.environment.ENABLE_PRE_AUTHENTICATION: "true"
+#
+# IMPORTANT: the pre-auth header NEVER unlocks /devops/* endpoints, no matter
+# how the gateway is configured. The /devops route picks ONE of two methods
+# via DEVOPS_AUTHENTICATION_METHOD (default `basic`, alternative `oauth2`).
+# This compose leaves it at the default - so /devops accepts only HTTP Basic
+# Auth with user `devops` and password = DEVOPS_PASSWORD. The companion
+# `run-preauth.py` script proves both halves of this.
+# =============================================================================
+
+services:
+  mongodb:
+    image: docker.io/mongo:8.2.3
+    command: mongod --storageEngine wiredTiger --noscripting
+    user: mongodb
+    restart: always
+    networks:
+      default:
+        aliases: [mongodb]
+
+  policies:
+    image: docker.io/eclipse/ditto-policies:latest
+    restart: always
+    networks:
+      default:
+        aliases: [ditto-cluster]
+    environment:
+      BIND_HOSTNAME: 0.0.0.0
+      MONGO_DB_HOSTNAME: mongodb
+
+  things:
+    image: docker.io/eclipse/ditto-things:latest
+    restart: always
+    depends_on: [policies]
+    networks:
+      default:
+        aliases: [ditto-cluster]
+    environment:
+      BIND_HOSTNAME: 0.0.0.0
+      MONGO_DB_HOSTNAME: mongodb
+
+  gateway:
+    image: docker.io/eclipse/ditto-gateway:latest
+    restart: always
+    depends_on: [policies, things]
+    networks:
+      default:
+        aliases: [ditto-cluster]
+    ports:
+      - "8080:8080"
+    environment:
+      BIND_HOSTNAME: 0.0.0.0
+
+      # KEY CONFIG #1 - enables /api/2 to trust the client-sent
+      # `x-ditto-pre-authenticated: <issuer>:<subject>` header.
+      # Without this, the header is ignored and the gateway returns 401.
+      ENABLE_PRE_AUTHENTICATION: "true"
+
+      # KEY CONFIG #2 - HTTP Basic Auth password for /devops/* and
+      # /api/2/connections. User is always `devops`.
+      # /devops auth is a single switch:
+      #   DEVOPS_AUTHENTICATION_METHOD=basic   (default, used here)
+      #     -> Basic Auth with user `devops` / password=DEVOPS_PASSWORD
+      #   DEVOPS_AUTHENTICATION_METHOD=oauth2
+      #     -> JWT bearer, validated against devops-specific OIDC
+      #        issuers (ditto.gateway.authentication.devops.oauth.
+      #        openid-connect-issuers) and DEVOPS_OAUTH2_SUBJECTS.
+      # The two are mutually exclusive. The pre-auth header is ignored
+      DEVOPS_PASSWORD: foobar

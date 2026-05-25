@@ -1,57 +1,80 @@
-# Direct Gateway Access (Example 10)
+# Example 10 — Direct Gateway Access
 
-Most Ditto deployments sit behind an nginx reverse proxy that handles two jobs:
-terminating HTTP Basic Auth and injecting a `x-ditto-pre-authenticated` header
-before forwarding requests to the gateway. This example removes nginx entirely
-and shows what happens at the gateway level directly.
+Minimal stacks that talk to `ditto-gateway` **directly** (no nginx, no UI,
+no swagger) and demonstrate which authentication methods are accepted on
+which endpoints.
 
-## What this example demonstrates
+Two important nuances:
 
-**Two authentication methods against the same gateway, with no nginx:**
+- For `/api/2` and `/ws`, pre-auth and JWT are **additive** — both providers can be active at once.
+- For `/devops` and `/api/2/connections`, JWT and Basic Auth are **mutually exclusive**, picked by the single switch `DEVOPS_AUTHENTICATION_METHOD` (default `basic`). The pre-auth header is never honored.
 
-1. **Pre-authenticated header** — the client sends
-   `x-ditto-pre-authenticated: nginx:ditto` straight to the gateway.
-   This is exactly what nginx would inject after verifying a Basic Auth
-   credential. With `ENABLE_PRE_AUTHENTICATION=true` set on the gateway, it
-   trusts this header and maps it to the subject `nginx:ditto` in policy
-   lookups.
+The example has two variants. Each one is a single docker-compose file with
+all values hardcoded:
 
-2. **External JWT (Bearer token)** — the client fetches a signed token from
-   the mock OAuth server (`oauth:9900/ditto`) and sends it as
-   `Authorization: Bearer <token>`. The gateway validates the token against
-   the issuer's JWKS endpoint and maps the `sub` claim to the subject
-   `ditto:ditto`.
+- **Variant A** leaves `/devops` in its default `basic` mode → demonstrates the
+  pre-auth header on `/api/2` and HTTP Basic Auth on `/devops`.
+- **Variant B** flips `/devops` to `oauth2` mode → demonstrates JWT end-to-end
+  on both `/api/2` and `/devops`, and proves Basic Auth on `/devops` is
+  rejected once you switch to `oauth2`.
 
-Both subjects are granted `READ/WRITE` on the same policy, so both methods
-work against the same thing.
+## Variant A: Pre-authenticated header
 
-## Flow
+File: `docker/docker-compose-e10-preauth.yml`
 
-1. Create a policy (`sensor-direct-policy`) with two subjects:
-   `nginx:ditto` and `ditto:ditto`.
-2. Create a thing (`sensor-direct-001`) using the pre-authenticated header.
-3. Fetch a JWT from the mock OAuth server.
-4. Read the same thing back using the JWT as a Bearer token.
+Key config in the gateway service:
 
-## Run it
-
-```bash
-# 1. Start the minimal stack
-uv run poe start-ditto-minimal
-
-# 2. (in another terminal) Run the example
-uv run poe e10
-
-# 3. Tear down
-uv run poe stop-ditto-minimal
+```yaml
+ENABLE_PRE_AUTHENTICATION: "true"   # enables `x-ditto-pre-authenticated` on /api/2
+DEVOPS_PASSWORD: foobar             # basic-auth password for /devops/*
 ```
 
-The `e10` poe task sets these environment variables automatically:
+```bash
+# 1. Start the stack
+uv run poe start-ditto-e10-preauth
 
-| Variable           | Value                       | Purpose                                          |
-| ------------------ | --------------------------- | ------------------------------------------------ |
-| `AUTH_TYPE`        | `PRE_AUTH`                  | Send the `x-ditto-pre-authenticated` header      |
-| `PRE_AUTH_SUBJECT` | `nginx:ditto`               | `<issuer>:<subject>` value placed in the header  |
-| `JWT_ISSUER`       | `oauth:9900`                | Mock OAuth server (resolved inside docker network) |
-| `JWT_SUBJECT`      | `ditto`                     | Subject used when requesting the JWT             |
-| `DITTO_API_BASE`   | `http://gateway:8080/api/2` | Direct URL to the gateway — no nginx hop         |
+# 2. Run the client (in another terminal)
+uv run poe e10-preauth
+
+# 3. Tear down
+uv run poe stop-ditto-e10-preauth
+```
+
+## Variant B: External JWT (end-to-end on both `/api/2` and `/devops`)
+
+File: `docker/docker-compose-e10-jwt.yml`
+
+Key config in the gateway service:
+
+```yaml
+JAVA_TOOL_OPTIONS: >-
+  # /api/2 + /ws issuer registration
+  -Dditto.gateway.authentication.oauth.protocol=http
+  -Dditto.gateway.authentication.oauth.openid-connect-issuers.ditto.issuer=oauth:9900/ditto
+  -Dditto.gateway.authentication.oauth.openid-connect-issuers.ditto.auth-subjects.0="{{ jwt:sub }}"
+  # /devops issuer registration (lives in a separate config block)
+  -Dditto.gateway.authentication.devops.oauth.protocol=http
+  -Dditto.gateway.authentication.devops.oauth.openid-connect-issuers.ditto.issuer=oauth:9900/ditto
+  -Dditto.gateway.authentication.devops.oauth.openid-connect-issuers.ditto.auth-subjects.0="{{ jwt:sub }}"
+  # allow-list of Ditto subjects permitted on /devops in oauth2 mode
+  -Dditto.gateway.authentication.devops.devops-oauth2-subjects.0=ditto:ditto
+DEVOPS_AUTHENTICATION_METHOD: oauth2     # flips /devops from basic to oauth2
+DEVOPS_PASSWORD: foobar                  # kept on purpose to prove it's ignored in oauth2 mode
+```
+
+> Why `devops-oauth2-subjects.0=...` instead of the env-var `DEVOPS_OAUTH2_SUBJECTS`?
+> The config field is a HOCON list; the env-var override expects a string and
+> crashes the gateway with `has type STRING rather than LIST`. The `.0=` form
+> sets index 0 of the list (same pattern as `auth-subjects.0` above). Add
+> `.1=...` for a second subject.
+
+```bash
+# 1. Start the stack (includes the mock OAuth server)
+uv run poe start-ditto-e10-jwt
+
+# 2. Run the client
+uv run poe e10-jwt
+
+# 3. Tear down
+uv run poe stop-ditto-e10-jwt
+```

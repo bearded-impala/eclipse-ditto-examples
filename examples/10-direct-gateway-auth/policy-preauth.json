@@ -1,13 +1,10 @@
 {
-    "policyId": "org.eclipse.ditto:sensor-direct-policy",
+    "policyId": "org.eclipse.ditto:e10-preauth-policy",
     "entries": {
-        "applicationPermissions": {
+        "DEFAULT": {
             "subjects": {
                 "nginx:ditto": {
-                    "type": "pre-authenticated subject sent by the client"
-                },
-                "ditto:ditto": {
-                    "type": "external JWT subject (mock OAuth issuer 'ditto', sub='ditto')"
+                    "type": "pre-authenticated header subject"
                 }
             },
             "resources": {

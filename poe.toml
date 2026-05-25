@@ -20,15 +20,25 @@ help = "Shutdown local Ditto with ferretDB"
 cwd = "docker"
 cmd = "docker compose -f docker-compose-ferret.yml down"
 
-[tool.poe.tasks.start-ditto-without-ui-nginx]
-help = "Start a minimal Ditto (no nginx / UI / swagger) - used by Example 10"
+[tool.poe.tasks.start-ditto-e10-preauth]
+help = "Start minimal Ditto for Example 10 - Variant A (pre-auth header)"
 cwd = "docker"
-cmd = "docker compose -f docker-compose-minimal.yml --env-file ../.env up"
+cmd = "docker compose -f docker-compose-e10-preauth.yml up"
 
-[tool.poe.tasks.stop-ditto-without-ui-nginx]
-help = "Shutdown the minimal Ditto stack"
+[tool.poe.tasks.stop-ditto-e10-preauth]
+help = "Shutdown Example 10 - Variant A stack"
 cwd = "docker"
-cmd = "docker compose -f docker-compose-minimal.yml --env-file ../.env down"
+cmd = "docker compose -f docker-compose-e10-preauth.yml down"
+
+[tool.poe.tasks.start-ditto-e10-jwt]
+help = "Start minimal Ditto + mock OAuth for Example 10 - Variant B (external JWT)"
+cwd = "docker"
+cmd = "docker compose -f docker-compose-e10-jwt.yml up"
+
+[tool.poe.tasks.stop-ditto-e10-jwt]
+help = "Shutdown Example 10 - Variant B stack"
+cwd = "docker"
+cmd = "docker compose -f docker-compose-e10-jwt.yml down"
 
 # MQTT broker
 
@@ -124,23 +134,18 @@ help = "Test JWT authentication with cognito"
 cwd = "examples/9-jwt-auth"
 cmd = "python jwt_cognito_example.py"
 
-# Example 10
-[tool.poe.tasks.e10]
-help = "Direct gateway auth: pre-authenticated header + external JWT (no nginx/UI)"
-shell = """
-docker run --rm \
-  --network docker_default \
-  -v $(pwd)/examples/10-direct-gateway-auth:/app/example:ro \
-  -v $(pwd)/utils:/app/utils:ro \
-  -e AUTH_TYPE=PRE_AUTH \
-  -e PRE_AUTH_SUBJECT=nginx:ditto \
-  -e JWT_ISSUER=oauth:9900 \
-  -e JWT_SUBJECT=ditto \
-  -e DITTO_API_BASE=http://gateway:8080/api/2 \
-  -e PYTHONPATH=/app \
-  python:3.11-slim \
-  sh -c 'pip install -q httpx python-dotenv rich ditto-client microsoft-kiota-http && python /app/example/run.py'
-"""
+# Example 10 - Variant A: pre-authenticated header
+# Runs from the host - gateway is published on localhost:8080 by compose.
+[tool.poe.tasks.e10-preauth]
+help = "Example 10 / Variant A: pre-auth header (run after start-ditto-e10-preauth)"
+cwd = "examples/10-direct-gateway-auth"
+cmd = "python run-preauth.py"
+
+# Example 10 - Variant B: external JWT
+[tool.poe.tasks.e10-jwt]
+help = "Example 10 / Variant B: external JWT (run after start-ditto-e10-jwt)"
+cwd = "docker"
+cmd = "docker compose -f docker-compose-e10-jwt.yml run --rm client"
 
 [tool.poe.tasks.test-client]
 help = "Eclipse-ditto operations using a python client"

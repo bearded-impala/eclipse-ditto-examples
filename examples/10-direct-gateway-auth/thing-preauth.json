@@ -1,0 +1,7 @@
+{
+    "thingId": "org.eclipse.ditto:e10-preauth-thing",
+    "policyId": "org.eclipse.ditto:e10-preauth-policy",
+    "attributes": {
+        "demo": "preauth"
+    }
+}

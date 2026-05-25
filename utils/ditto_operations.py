@@ -34,21 +34,13 @@ load_dotenv()
 
 # Configuration
 DITTO_API_BASE = os.getenv("DITTO_API_BASE", "http://localhost:8080")
-
-# Supported AUTH_TYPE values:
-#   BASIC     - HTTP Basic Auth (terminated by an nginx reverse proxy in front of Ditto)
-#   BEARER    - Fetch a JWT from a configured OAuth issuer and send it as a Bearer token
-#   PRE_AUTH  - Send the `x-ditto-pre-authenticated: <PRE_AUTH_SUBJECT>` header directly
-#               (used when talking straight to the gateway without an nginx in front)
-AUTH_TYPE = os.getenv("AUTH_TYPE", "BASIC").upper()
+AUTH_TYPE = os.getenv("AUTH_TYPE", "BASIC").upper()  # "BASIC" or "BEARER"
 
 AUTH_USER = os.getenv("DITTO_USERNAME", "ditto")
 AUTH_PASS = os.getenv("DITTO_PASSWORD", "ditto")
 
 JWT_ISSUER = os.getenv("JWT_ISSUER", "")
 JWT_SUBJECT = os.getenv("JWT_SUBJECT", "ditto")
-
-PRE_AUTH_SUBJECT = os.getenv("PRE_AUTH_SUBJECT", "")
 
 
 def _get_jwt_token(jwt_issuer: str, subject: str) -> Optional[str]:
@@ -104,14 +96,7 @@ def _determine_auth(token: Optional[str] = None) -> Tuple[Optional[str], str]:
             return fetched_token, "bearer-env"
         print_error("Failed to fetch JWT token (AUTH_TYPE=BEARER does not fall back to basic auth)")
         sys.exit(1)
-
-    if AUTH_TYPE == "PRE_AUTH":
-        if not PRE_AUTH_SUBJECT:
-            print_error("AUTH_TYPE=PRE_AUTH but PRE_AUTH_SUBJECT is not configured")
-            sys.exit(1)
-        print_info(f"Auth mode: pre-authenticated header (x-ditto-pre-authenticated='{PRE_AUTH_SUBJECT}')")
-        return None, "pre-auth"
-
+    
     # Default to basic auth
     print_info(f"Auth mode: basic (AUTH_TYPE={AUTH_TYPE})")
     return None, "basic"
@@ -131,33 +116,26 @@ class BearerTokenAuthProvider(AuthenticationProvider):
 
 
 async def _http_request(method: str, url: str, token: Optional[str] = None, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Make HTTP request with bearer token, pre-authenticated header, or basic auth.
+    """Make HTTP request with either JWT token or basic auth. Workaround for ditto-client serialization issues.
+    
     Returns:
         Response JSON as dict
     """
-    use_pre_auth = (not token) and AUTH_TYPE == "PRE_AUTH" and bool(PRE_AUTH_SUBJECT)
-    if token:
-        auth_type = "bearer token"
-    elif use_pre_auth:
-        auth_type = f"pre-authenticated header ({PRE_AUTH_SUBJECT})"
-    else:
-        auth_type = "basic auth"
+    auth_type = "bearer token" if token else "basic auth"
     print_info(f"HTTP {method.upper()} {url} using {auth_type}")
 
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    elif use_pre_auth:
-        headers["x-ditto-pre-authenticated"] = PRE_AUTH_SUBJECT
-
+    
     if data:
         # Use merge-patch+json for PATCH operations, regular json for others
         if method.upper() == "PATCH":
             headers["Content-Type"] = "application/merge-patch+json"
         else:
             headers["Content-Type"] = "application/json"
-
-    auth = None if (token or use_pre_auth) else (AUTH_USER, AUTH_PASS)
+    
+    auth = None if token else (AUTH_USER, AUTH_PASS)
 
     async with httpx.AsyncClient(verify=False) as client:
         response = await client.request(method, url, headers=headers, json=data, auth=auth, timeout=30.0)
